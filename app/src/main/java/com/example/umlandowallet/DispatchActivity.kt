@@ -2,7 +2,6 @@ package com.example.umlandowallet
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.example.umlandowallet.data.remote.Service
 import kotlinx.coroutines.*
@@ -23,7 +22,6 @@ class DispatchActivity : AppCompatActivity() {
         runBlocking {
             latestBlockHash = service.getlatestBlockHash()
             latestBlockHeight = service.getlatestBlockHeight()
-
         }
 
         Global.homeDir = filesDir.absolutePath + "/uMlando"
