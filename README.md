@@ -9,7 +9,7 @@ language bindings are created by the [ldk-garbagecollected](https://github.com/l
 To include the LDK Kotlin bindings in an Android project download the latest binary from [here](https://github.com/lightningdevkit/ldk-garbagecollected/releases/tag/v0.0.105.1)
 and place it in your `libs` directory.
 
-Then add to your build.gradle file:
+Then add to your `build.gradle` file:
 ```groovy
 dependencies {
     // ...
