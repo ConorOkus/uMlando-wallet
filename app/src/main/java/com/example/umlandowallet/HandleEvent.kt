@@ -4,7 +4,7 @@ import org.ldk.structs.*
 
 fun handleEvent(event: Event) {
     if (event is Event.ChannelClosed) {
-        println("ReactNativeLDK: " + "ChannelClosed");
+        println("ChannelClosed");
         val params = WritableMap()
         val reason = event.reason;
         params.putString("channel_id", byteArrayToHex(event.channel_id));

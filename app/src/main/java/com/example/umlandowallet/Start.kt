@@ -18,6 +18,8 @@ fun start(
 ) {
     println("LDK starting...")
     println("LATEST BLOCK HASH: $latestBlockHash")
+    println("LATEST BLOCK HEIGHT: $latestBlockHeight")
+
 
     // Initialize the FeeEstimator #################################################################
     // What it's used for: estimating fees for on-chain transactions that LDK wants to broadcast.
@@ -34,27 +36,28 @@ fun start(
     // Initialize the Logger #######################################################################
     // What it's used for: LDK logging
     val logger = Logger.new_impl { arg: Record ->
-        var level = Level.LDKLevel_Debug
-        println("LDK: " + level)
+        if (arg._level == Level.LDKLevel_Gossip) return@new_impl;
+        if (arg._level == Level.LDKLevel_Trace) return@new_impl;
+        if (arg._level == Level.LDKLevel_Debug) return@new_impl;
+        println("Logger: " + arg._args)
         return@new_impl
 
-//        val params = Arguments.createMap()
-//        params.putString("line", arg)
+//       val params = Arguments.createMap()
+//       params.putString("line", arg)
 //       sendEvent(MARKER_LOG, params)
     }
-//
-//
-    // Initialize the BroadcasterInterface #########################################################
+
+    // Initialize the Broadcaster #########################################################
     // What it's used for: broadcasting various lightning transactions, including commitment transactions
     val tx_broadcaster = BroadcasterInterface.new_impl { tx ->
-        println("LDK: " + "broadcaster sends an event asking to broadcast some txhex...")
+        println("Broadcaster: " + "broadcaster sends an event asking to broadcast some txhex...")
         val params = WritableMap();
         params.putString("txhex", byteArrayToHex(tx))
         storeEvent(Global.homeDir + "/events_tx_broadcast", params)
         Global.eventsTxBroadcast = Global.eventsTxBroadcast.plus(params.toString())
     }
 
-    // INITIALIZE PERSIST ##########################################################################
+    // Initialize Persist ##########################################################################
     // What it's used for: persisting crucial channel data in a timely manner
     val persister = Persist.new_impl(object : Persist.PersistInterface {
         override fun persist_new_channel(
@@ -64,8 +67,8 @@ fun start(
         ): Result_NoneChannelMonitorUpdateErrZ? {
             if (id == null || data == null) return null;
             val channel_monitor_bytes = data.write()
-            println("ReactNativeLDK: persist_new_channel")
-            File(Global.homeDir + "/" + Global.prefixChannelMonitor + byteArrayToHex(id.to_channel_id()) + ".hex").writeText(
+            println("persist_new_channel")
+            File(Global.homeDir + "/" + Global.prefixChannelMonitor + byteArrayToHex(id.write()) + ".hex").writeText(
                 byteArrayToHex(channel_monitor_bytes)
             );
             return Result_NoneChannelMonitorUpdateErrZ.ok();
@@ -75,12 +78,12 @@ fun start(
             id: OutPoint?,
             update: ChannelMonitorUpdate?,
             data: ChannelMonitor?,
-            update_id: MonitorUpdateId?
+            update_id: MonitorUpdateId
         ): Result_NoneChannelMonitorUpdateErrZ? {
             if (id == null || data == null) return null;
             val channel_monitor_bytes = data.write()
-            println("ReactNativeLDK: update_persisted_channel");
-            File(Global.homeDir + "/" + Global.prefixChannelMonitor + byteArrayToHex(id.to_channel_id()) + ".hex").writeText(
+            println("update_persisted_channel");
+            File(Global.homeDir + "/" + Global.prefixChannelMonitor + byteArrayToHex(id.write()) + ".hex").writeText(
                 byteArrayToHex(channel_monitor_bytes)
             );
             return Result_NoneChannelMonitorUpdateErrZ.ok();
@@ -94,16 +97,25 @@ fun start(
         }
 
         override fun persist_manager(channel_manager_bytes: ByteArray?) {
-            println("PERSIST_MANAGER");
+            println("persist_manager");
             if (channel_manager_bytes != null) {
                 val hex = byteArrayToHex(channel_manager_bytes)
-                println("CHANNEL MANAGER BYTES: $hex")
+                println("channel_manager_bytes: $hex")
                 File(Global.homeDir + "/" + Global.prefixChannelManager).writeText(byteArrayToHex(channel_manager_bytes));
+            }
+        }
+
+        override fun persist_network_graph(network_graph: ByteArray?) {
+            println("persist_network_graph");
+            if(Global.prefixNetworkGraph != "" && network_graph !== null) {
+                val hex = byteArrayToHex(network_graph)
+                println("persist_network_graph_bytes: $hex");
+                File(Global.homeDir + "/" + Global.prefixNetworkGraph).writeText(byteArrayToHex(network_graph))
             }
         }
     }
 
-    // INITIALIZE THE CHAINMONITOR #################################################################
+    // Initialize Chain Monitor #################################################################
     // What it's used for: monitoring the chain for lighting transactions that are relevant to our
     // node, and broadcasting force close transactions if need be
 
@@ -111,7 +123,7 @@ fun start(
     // useful if you pre-filter blocks or use compact filters. Otherwise, LDK will need full blocks.
     Global.txFilter = Filter.new_impl(object : Filter.FilterInterface {
         override fun register_tx(txid: ByteArray, script_pubkey: ByteArray) {
-            println("LDK: register_tx");
+            println("register_tx");
             val params = WritableMap()
             params.putString("txid", byteArrayToHex(txid.reversedArray()))
             params.putString("script_pubkey", byteArrayToHex(script_pubkey))
@@ -120,7 +132,7 @@ fun start(
         }
 
         override fun register_output(output: WatchedOutput): Option_C2Tuple_usizeTransactionZZ {
-            println("LDK: register_output");
+            println("register_output");
             val params = WritableMap()
             val blockHash = output._block_hash;
             if (blockHash is ByteArray) {
@@ -139,7 +151,7 @@ fun start(
 
     Global.chainMonitor = ChainMonitor.of(filter, tx_broadcaster, logger, fee_estimator, persister)
 
-    // INITIALIZE THE KEYSMANAGER ##################################################################
+    // Initialize the Keys Manager ##################################################################
     // What it's used for: providing keys for signing lightning transactions
     Global.keysManager = KeysManager.of(
         hexStringToByteArray(entropy),
@@ -147,7 +159,7 @@ fun start(
         (System.currentTimeMillis() * 1000).toInt()
     )
 
-    // READ CHANNELMONITOR STATE FROM DISK #########################################################
+    // Read Channel Monitor state from disk #########################################################
     // Initialize the hashmap where we'll store the `ChannelMonitor`s read from disk.
     // This hashmap will later be given to the `ChannelManager` on initialization.
     var channelMonitors = arrayOf<ByteArray>();
@@ -163,8 +175,7 @@ fun start(
     }
 
 
-    // Initialize GRAPH SYNC #########################################################################
-
+    // Initialize Graph Sync #########################################################################
     val f = File(Global.homeDir+ "/" + Global.prefixNetworkGraph);
     if (f.exists()) {
         println("loading network graph...")
@@ -180,12 +191,12 @@ fun start(
             }
             // error, creating from scratch
             Global.router =
-                NetworkGraph.of(hexStringToByteArray("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f").reversedArray())
+                NetworkGraph.of(hexStringToByteArray("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943").reversedArray())
         }
     } else {
         // first run, creating from scratch
         Global.router =
-            NetworkGraph.of(hexStringToByteArray("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f").reversedArray())
+            NetworkGraph.of(hexStringToByteArray("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943").reversedArray())
     }
 
 ////    /*val route_handler = NetGraphMsgHandler.of(
@@ -226,7 +237,7 @@ fun start(
                 fee_estimator,
                 Global.chainMonitor,
                 Global.txFilter,
-                Global.router,
+                Global.router!!.write(),
                 tx_broadcaster,
                 logger
             );
@@ -234,6 +245,7 @@ fun start(
             Global.channelManagerConstructor!!.chain_sync_completed(channel_manager_persister, scorer);
             Global.peerManager = Global.channelManagerConstructor!!.peer_manager;
             Global.nioPeerHandler = Global.channelManagerConstructor!!.nio_peer_handler;
+            Global.router = Global.channelManagerConstructor!!.net_graph;
         } else {
             // fresh start
             Global.channelManagerConstructor = ChannelManagerConstructor(
@@ -252,12 +264,11 @@ fun start(
             Global.channelManagerConstructor!!.chain_sync_completed(channel_manager_persister, scorer);
             Global.peerManager = Global.channelManagerConstructor!!.peer_manager;
             Global.nioPeerHandler = Global.channelManagerConstructor!!.nio_peer_handler;
+            Global.router = Global.channelManagerConstructor!!.net_graph;
         }
 
         Global.nioPeerHandler!!.bind_listener(InetSocketAddress("0.0.0.0", 9735))
-//        promise.resolve("hello ldk");
     } catch (e: Exception) {
         println("LDK: can't start, " + e.message);
-//        promise.reject(e.message);
     }
 }
