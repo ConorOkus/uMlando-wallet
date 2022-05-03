@@ -3,10 +3,10 @@ Lightning Dev Kit Android Demo Wallet
 
 This project uses a .aar package for the Android platforms that provide language bindings for the [LDK](https://lightningdevkit.org/). The Kotlin 
 language bindings are created by the [ldk-garbagecollected](https://github.com/lightningdevkit/ldk-garbagecollected) project and the latest release can be found
-[here](https://github.com/lightningdevkit/ldk-garbagecollected/releases/tag/v0.0.105.1).
+[here](https://github.com/lightningdevkit/ldk-garbagecollected/releases).
 
 ## How to use
-To include the LDK Kotlin bindings in an Android project download the latest binary from [here](https://github.com/lightningdevkit/ldk-garbagecollected/releases/tag/v0.0.105.1)
+To include the LDK Kotlin bindings in an Android project download the latest binary from [here](https://github.com/lightningdevkit/ldk-garbagecollected/releases)
 and place it in your `libs` directory.
 
 Then add to your `build.gradle` file:
