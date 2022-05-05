@@ -249,7 +249,7 @@ fun start(
         } else {
             // fresh start
             Global.channelManagerConstructor = ChannelManagerConstructor(
-                Network.LDKNetwork_Testnet,
+                Network.LDKNetwork_Regtest,
                 uc,
                 hexStringToByteArray(latestBlockHash),
                 latestBlockHeight,
