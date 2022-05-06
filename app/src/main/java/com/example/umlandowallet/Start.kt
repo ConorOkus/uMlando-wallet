@@ -4,7 +4,11 @@ import org.ldk.batteries.ChannelManagerConstructor
 import org.ldk.enums.ConfirmationTarget
 import org.ldk.enums.Level
 import org.ldk.enums.Network
+import org.ldk.impl.bindings
 import org.ldk.structs.*
+import org.ldk.structs.Logger.LoggerInterface
+import org.ldk.structs.FeeEstimator.FeeEstimatorInterface
+import org.ldk.structs.Persister.PersisterInterface
 import java.io.File
 import java.net.InetSocketAddress
 import java.util.ArrayList
@@ -17,80 +21,20 @@ fun start(
     serializedChannelMonitors: String
 ) {
     println("LDK starting...")
-    println("LATEST BLOCK HASH: $latestBlockHash")
-    println("LATEST BLOCK HEIGHT: $latestBlockHeight")
 
+    // Estimating fees for on-chain transactions that LDK wants to broadcast.
+    val feeEstimator: FeeEstimator = FeeEstimator.new_impl(LDKFeeEstimator)
 
-    // Initialize the FeeEstimator #################################################################
-    // What it's used for: estimating fees for on-chain transactions that LDK wants to broadcast.
-    val fee_estimator = FeeEstimator.new_impl { confirmation_target: ConfirmationTarget? ->
-        var ret = Global.feerateFast
-        if (confirmation_target != null) {
-            if (confirmation_target.equals(ConfirmationTarget.LDKConfirmationTarget_HighPriority)) ret = Global.feerateFast
-            if (confirmation_target.equals(ConfirmationTarget.LDKConfirmationTarget_Normal)) ret = Global.feerateMedium
-            if (confirmation_target.equals(ConfirmationTarget.LDKConfirmationTarget_Background)) ret = Global.feerateSlow
-        }
-        return@new_impl ret;
-    }
+    // LDK logging
+    val logger: Logger = Logger.new_impl(LDKLogger)
 
-    // Initialize the Logger #######################################################################
-    // What it's used for: LDK logging
-    val logger = Logger.new_impl { arg: Record ->
-        if (arg._level == Level.LDKLevel_Gossip) return@new_impl;
-        if (arg._level == Level.LDKLevel_Trace) return@new_impl;
-        if (arg._level == Level.LDKLevel_Debug) return@new_impl;
-        println("Logger: " + arg._args)
-        return@new_impl
+    // Broadcasting various lightning transactions, including commitment transactions
+    val txBroadcaster: BroadcasterInterface = BroadcasterInterface.new_impl(LDKBroadcaster)
 
-//       val params = Arguments.createMap()
-//       params.putString("line", arg)
-//       sendEvent(MARKER_LOG, params)
-    }
+    // Persisting crucial channel data in a timely manner
+    val persister: Persist = Persist.new_impl(LDKPersister)
 
-    // Initialize the Broadcaster #########################################################
-    // What it's used for: broadcasting various lightning transactions, including commitment transactions
-    val tx_broadcaster = BroadcasterInterface.new_impl { tx ->
-        println("Broadcaster: " + "broadcaster sends an event asking to broadcast some txhex...")
-        val params = WritableMap();
-        params.putString("txhex", byteArrayToHex(tx))
-        storeEvent(Global.homeDir + "/events_tx_broadcast", params)
-        Global.eventsTxBroadcast = Global.eventsTxBroadcast.plus(params.toString())
-    }
-
-    // Initialize Persist ##########################################################################
-    // What it's used for: persisting crucial channel data in a timely manner
-    val persister = Persist.new_impl(object : Persist.PersistInterface {
-        override fun persist_new_channel(
-            id: OutPoint?,
-            data: ChannelMonitor?,
-            update_id: MonitorUpdateId?
-        ): Result_NoneChannelMonitorUpdateErrZ? {
-            if (id == null || data == null) return null;
-            val channel_monitor_bytes = data.write()
-            println("persist_new_channel")
-            File(Global.homeDir + "/" + Global.prefixChannelMonitor + byteArrayToHex(id.write()) + ".hex").writeText(
-                byteArrayToHex(channel_monitor_bytes)
-            );
-            return Result_NoneChannelMonitorUpdateErrZ.ok();
-        }
-
-        override fun update_persisted_channel(
-            id: OutPoint?,
-            update: ChannelMonitorUpdate?,
-            data: ChannelMonitor?,
-            update_id: MonitorUpdateId
-        ): Result_NoneChannelMonitorUpdateErrZ? {
-            if (id == null || data == null) return null;
-            val channel_monitor_bytes = data.write()
-            println("update_persisted_channel");
-            File(Global.homeDir + "/" + Global.prefixChannelMonitor + byteArrayToHex(id.write()) + ".hex").writeText(
-                byteArrayToHex(channel_monitor_bytes)
-            );
-            return Result_NoneChannelMonitorUpdateErrZ.ok();
-        }
-    })
-
-    // Initializing channel manager persister that is responsible for backing up channel_manager bytes
+    // Responsible for backing up channel_manager bytes
     val channel_manager_persister = object : ChannelManagerConstructor.EventHandler {
         override fun handle_event(event: Event) {
             handleEvent(event);
@@ -149,12 +93,12 @@ fun start(
     val filter = Option_FilterZ.some(Global.txFilter);
     println(org.ldk.impl.version.get_ldk_java_bindings_version() + ", " + org.ldk.impl.bindings.get_ldk_c_bindings_version() + ", " + org.ldk.impl.bindings.get_ldk_version());
 
-    Global.chainMonitor = ChainMonitor.of(filter, tx_broadcaster, logger, fee_estimator, persister)
+    Global.chainMonitor = ChainMonitor.of(filter, txBroadcaster, logger, feeEstimator, persister)
 
     // Initialize the Keys Manager ##################################################################
     // What it's used for: providing keys for signing lightning transactions
     Global.keysManager = KeysManager.of(
-        hexStringToByteArray(entropy),
+        entropy.hexStringToByteArray(),
         System.currentTimeMillis() / 1000,
         (System.currentTimeMillis() * 1000).toInt()
     )
@@ -168,7 +112,7 @@ fun start(
         val channelMonitorHexes = serializedChannelMonitors.split(",").toTypedArray();
         val channel_monitor_list = ArrayList<ByteArray>()
         channelMonitorHexes.iterator().forEach {
-            val channel_monitor_bytes = hexStringToByteArray(it);
+            val channel_monitor_bytes = it.hexStringToByteArray();
             channel_monitor_list.add(channel_monitor_bytes);
         }
         channelMonitors = channel_monitor_list.toTypedArray();
@@ -177,6 +121,7 @@ fun start(
 
     // Initialize Graph Sync #########################################################################
     val f = File(Global.homeDir+ "/" + Global.prefixNetworkGraph);
+    val genesisHash = "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"
     if (f.exists()) {
         println("loading network graph...")
         val serialized_graph = File(Global.homeDir+ "/" + Global.prefixNetworkGraph).readBytes()
@@ -191,12 +136,12 @@ fun start(
             }
             // error, creating from scratch
             Global.router =
-                NetworkGraph.of(hexStringToByteArray("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943").reversedArray())
+                NetworkGraph.of(genesisHash.hexStringToByteArray().reversedArray())
         }
     } else {
         // first run, creating from scratch
         Global.router =
-            NetworkGraph.of(hexStringToByteArray("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943").reversedArray())
+            NetworkGraph.of(genesisHash.hexStringToByteArray().reversedArray())
     }
 
 ////    /*val route_handler = NetGraphMsgHandler.of(
@@ -205,7 +150,7 @@ fun start(
 ////        logger
 ////    )*/
 
-    // INITIALIZE THE CHANNELMANAGER ###############################################################
+    // INITIALIZE THE CHANNEL MANAGER ###############################################################
    // What it's used for: managing channel state
 
 
@@ -230,15 +175,15 @@ fun start(
         if (serializedChannelManager != "") {
             // loading from disk
             Global.channelManagerConstructor = ChannelManagerConstructor(
-                hexStringToByteArray(serializedChannelManager),
+                serializedChannelManager.hexStringToByteArray(),
                 channelMonitors,
                 uc,
                 Global.keysManager?.as_KeysInterface(),
-                fee_estimator,
+                feeEstimator,
                 Global.chainMonitor,
                 Global.txFilter,
                 Global.router!!.write(),
-                tx_broadcaster,
+                txBroadcaster,
                 logger
             );
             Global.channelManager = Global.channelManagerConstructor!!.channel_manager;
@@ -251,13 +196,13 @@ fun start(
             Global.channelManagerConstructor = ChannelManagerConstructor(
                 Network.LDKNetwork_Regtest,
                 uc,
-                hexStringToByteArray(latestBlockHash),
+                latestBlockHash.hexStringToByteArray(),
                 latestBlockHeight,
                 Global.keysManager?.as_KeysInterface(),
-                fee_estimator,
+                feeEstimator,
                 Global.chainMonitor,
                 Global.router,
-                tx_broadcaster,
+                txBroadcaster,
                 logger
             );
             Global.channelManager = Global.channelManagerConstructor!!.channel_manager;
@@ -270,5 +215,58 @@ fun start(
         Global.nioPeerHandler!!.bind_listener(InetSocketAddress("0.0.0.0", 9735))
     } catch (e: Exception) {
         println("LDK: can't start, " + e.message);
+    }
+}
+
+// to create a FeeEstimator we need to provide an object that implement the FeeEstimatorInterface
+// which has 1 function: get_est_sat_per_1000_weight(conf_target: ConfirmationTarget?): Int
+object LDKFeeEstimator: FeeEstimatorInterface {
+    override fun get_est_sat_per_1000_weight(conf_target: ConfirmationTarget?): Int {
+        return Global.feerateFast
+    }
+}
+
+// to create a Logger we need to provide an object that implements the LoggerInterface
+// which has 1 function: log(record: Record?): Unit
+object LDKLogger : LoggerInterface {
+    override fun log(record: Record?) {
+        println("$record")
+    }
+}
+
+object LDKBroadcaster: BroadcasterInterface.BroadcasterInterfaceInterface {
+    override fun broadcast_transaction(tx: ByteArray?) {
+        println("Broadcasting transaction" + tx?.let { byteArrayToHex(it) })
+    }
+}
+
+object LDKPersister: Persist.PersistInterface {
+    override fun persist_new_channel(
+        id: OutPoint?,
+        data: ChannelMonitor?,
+        update_id: MonitorUpdateId?
+    ): Result_NoneChannelMonitorUpdateErrZ? {
+        if (id == null || data == null) return null;
+        val channel_monitor_bytes = data.write()
+        println("persist_new_channel")
+        File(Global.homeDir + "/" + Global.prefixChannelMonitor + byteArrayToHex(id.write()) + ".hex").writeText(
+            byteArrayToHex(channel_monitor_bytes)
+        );
+        return Result_NoneChannelMonitorUpdateErrZ.ok();
+    }
+
+    override fun update_persisted_channel(
+        id: OutPoint?,
+        update: ChannelMonitorUpdate?,
+        data: ChannelMonitor?,
+        update_id: MonitorUpdateId
+    ): Result_NoneChannelMonitorUpdateErrZ? {
+        if (id == null || data == null) return null;
+        val channel_monitor_bytes = data.write()
+        println("update_persisted_channel");
+        File(Global.homeDir + "/" + Global.prefixChannelMonitor + byteArrayToHex(id.write()) + ".hex").writeText(
+            byteArrayToHex(channel_monitor_bytes)
+        );
+        return Result_NoneChannelMonitorUpdateErrZ.ok();
     }
 }
