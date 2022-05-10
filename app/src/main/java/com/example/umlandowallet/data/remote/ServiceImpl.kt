@@ -19,7 +19,7 @@ class ServiceImpl(private val client: HttpClient) : Service {
     override suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int): Boolean {
         println("LDK: attempting to connect to peer $pubkeyHex")
         return try {
-            Global.nioPeerHandler!!.connect(hexStringToByteArray(pubkeyHex),
+            Global.nioPeerHandler!!.connect(pubkeyHex.hexStringToByteArray(),
                 InetSocketAddress(hostname, port), 5000)
             println("LDK: successfully connected to peer $pubkeyHex")
             true
