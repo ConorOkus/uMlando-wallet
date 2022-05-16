@@ -31,5 +31,11 @@ fun MainScreen(navController: NavController) {
         }) {
             Text(text = "List Peers")
         }
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(onClick = {
+            navController.navigate(Screen.NodeIdScreen.route)
+        }) {
+            Text(text = "Node Id")
+        }
     }
 }

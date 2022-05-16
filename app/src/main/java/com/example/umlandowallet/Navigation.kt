@@ -8,6 +8,7 @@ import com.example.umlandowallet.data.Screen
 import com.example.umlandowallet.ui.ConnectPeerScreen
 import com.example.umlandowallet.ui.ListPeersScreen
 import com.example.umlandowallet.ui.MainScreen
+import com.example.umlandowallet.ui.NodeIdScreen
 
 @Composable
 fun navigation() {
@@ -21,6 +22,9 @@ fun navigation() {
         }
         composable(route = Screen.ListPeersScreen.route) {
             ListPeersScreen()
+        }
+        composable(route = Screen.NodeIdScreen.route) {
+            NodeIdScreen()
         }
     }
 }
