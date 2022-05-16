@@ -31,7 +31,7 @@ fun start(
     // Broadcasting various lightning transactions, including commitment transactions
     val txBroadcaster: BroadcasterInterface = BroadcasterInterface.new_impl(LDKBroadcaster)
 
-    // Optional: Here we initialize the NetworkGraph so LDK provides routes for us
+    // Optional: Here we initialize the NetworkGraph so LDK does path finding and provides routes for us
     val network : Network = Network.LDKNetwork_Regtest
     val genesisBlock : BestBlock = BestBlock.from_genesis(network)
     val genesisBlockHash : String = byteArrayToHex(genesisBlock.block_hash())
@@ -157,6 +157,8 @@ object LDKLogger : LoggerInterface {
 object LDKBroadcaster: BroadcasterInterface.BroadcasterInterfaceInterface {
     override fun broadcast_transaction(tx: ByteArray?) {
         println("Broadcasting transaction" + tx?.let { byteArrayToHex(it) })
+
+        // Use BDK?
     }
 }
 
@@ -187,7 +189,7 @@ fun initializeNetworkGraph(genesisBlockHash: String) {
 }
 
 
-// To create a Perisister for our Channel Monitors we need to proved and object that implements the PersistInterface
+// To create a Perisister for our Channel Monitors we need to provide an object that implements the PersistInterface
 // which has 2 functions persist_new_channel & update_persisted_channel
 object LDKPersister: Persist.PersistInterface {
     override fun persist_new_channel(
