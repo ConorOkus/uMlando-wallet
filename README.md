@@ -25,5 +25,9 @@ import org.ldk.structs.*
 
 _Note: i686 builds are not included in aars in order to preserve space - there are builds for x86_64, so make sure to install a compatible emulator_
 
+## Features
+* [x] Connect to a peer
+* [x] List peers
+* [x] Get Node ID
 
 
