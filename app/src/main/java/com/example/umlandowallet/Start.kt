@@ -130,7 +130,10 @@ fun start(
             Global.router = Global.channelManagerConstructor!!.net_graph;
         }
 
-        Global.nioPeerHandler!!.bind_listener(InetSocketAddress("0.0.0.0", 9735))
+        // It seems that if you want to communicate from your computer to your emulator,
+        // the IP address to use is 127.0.0.1 and you need to do some port forwarding
+        // using ADB in command line e.g adb forward tcp:9777 tcp:9777
+        Global.nioPeerHandler!!.bind_listener(InetSocketAddress("127.0.0.1", 9777))
     } catch (e: Exception) {
         println("LDK: can't start, " + e.message);
     }
