@@ -18,6 +18,7 @@ class DispatchActivity : AppCompatActivity() {
         var latestBlockHash = ""
         var latestBlockHeight = 0
 
+
         // Probably a cleaner way to do this!
         runBlocking {
             latestBlockHash = service.getlatestBlockHash()
