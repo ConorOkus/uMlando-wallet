@@ -12,6 +12,7 @@ class Global : Application() {
         val prefixChannelMonitor = "channel_monitor_"
         val prefixChannelManager = "channel_manager"
         val prefixNetworkGraph = "network_graph.bin"
+        val prefixScorer = "scorer"
 
 
         val feerateFast = 7500; // estimate fee rate in BTC/kB
@@ -41,6 +42,5 @@ class Global : Application() {
 
         var router: NetworkGraph? = null
         var txFilter: Filter? = null
-
     }
 }

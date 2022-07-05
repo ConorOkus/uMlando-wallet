@@ -2,16 +2,13 @@ package com.example.umlandowallet
 
 import org.ldk.batteries.ChannelManagerConstructor
 import org.ldk.enums.ConfirmationTarget
-import org.ldk.enums.Level
 import org.ldk.enums.Network
-import org.ldk.impl.bindings
 import org.ldk.structs.*
-import org.ldk.structs.Logger.LoggerInterface
 import org.ldk.structs.FeeEstimator.FeeEstimatorInterface
-import org.ldk.structs.Persister.PersisterInterface
+import org.ldk.structs.Logger.LoggerInterface
 import java.io.File
 import java.net.InetSocketAddress
-import java.util.ArrayList
+
 
 fun start(
     entropy: String,
@@ -21,6 +18,9 @@ fun start(
     serializedChannelMonitors: String
 ) {
     println("LDK starting...")
+
+    println(org.ldk.impl.version.get_ldk_java_bindings_version())
+
 
     // Estimating fees for on-chain transactions that LDK wants to broadcast.
     val feeEstimator: FeeEstimator = FeeEstimator.new_impl(LDKFeeEstimator)
@@ -36,7 +36,7 @@ fun start(
     val genesisBlock : BestBlock = BestBlock.from_genesis(network)
     val genesisBlockHash : String = byteArrayToHex(genesisBlock.block_hash())
 
-    initializeNetworkGraph(genesisBlockHash)
+    initializeNetworkGraph(genesisBlockHash, logger)
 
     // Persisting crucial channel data in a timely manner
     val persister: Persist = Persist.new_impl(LDKPersister)
@@ -72,7 +72,7 @@ fun start(
     }
 
    // Initialize the channel manager for managing channel state
-    val scorer = MultiThreadedLockableScore.of(Scorer.with_default().as_Score())
+    // val scorer = MultiThreadedLockableScore.of(Scorer.with_default().as_Score())
 
     // This is going to be the fee policy for __incoming__ channels. they are set upfront globally:
     val userConfig = UserConfig.with_default()
@@ -88,6 +88,10 @@ fun start(
     val newLim = ChannelHandshakeLimits.with_default()
     newLim.set_force_announced_channel_preference(false)
     userConfig.set_peer_channel_config_limits(newLim)
+
+    val params = ProbabilisticScoringParameters.with_default()
+    val defaultScorer = ProbabilisticScorer.of(params, Global.router, logger).as_Score()
+    val scorer = MultiThreadedLockableScore.of(defaultScorer)
 
     try {
         if (serializedChannelManager != "") {
@@ -165,12 +169,12 @@ object LDKBroadcaster: BroadcasterInterface.BroadcasterInterfaceInterface {
     }
 }
 
-fun initializeNetworkGraph(genesisBlockHash: String) {
+fun initializeNetworkGraph(genesisBlockHash: String, logger: Logger) {
     val f = File(Global.homeDir+ "/" + Global.prefixNetworkGraph);
     if (f.exists()) {
         println("loading network graph...")
         val serializedGraph = File(Global.homeDir+ "/" + Global.prefixNetworkGraph).readBytes()
-        val readResult = NetworkGraph.read(serializedGraph)
+        val readResult = NetworkGraph.read(serializedGraph, logger)
         if (readResult is Result_NetworkGraphDecodeErrorZ.Result_NetworkGraphDecodeErrorZ_OK) {
             Global.router = readResult.res
             println("loaded network graph ok")
@@ -181,13 +185,14 @@ fun initializeNetworkGraph(genesisBlockHash: String) {
             }
 
             // error, creating from scratch
+            println("creating network graph from scratch")
             Global.router =
-                NetworkGraph.of(genesisBlockHash.hexStringToByteArray().reversedArray())
+                NetworkGraph.of(genesisBlockHash.hexStringToByteArray().reversedArray(), logger)
         }
     } else {
         // first run, creating from scratch
         Global.router =
-            NetworkGraph.of(genesisBlockHash.hexStringToByteArray().reversedArray())
+            NetworkGraph.of(genesisBlockHash.hexStringToByteArray().reversedArray(), logger)
     }
 }
 
@@ -246,6 +251,15 @@ object ChannelManagerEventHandler : ChannelManagerConstructor.EventHandler {
             val hex = byteArrayToHex(network_graph)
             println("persist_network_graph_bytes: $hex");
             File(Global.homeDir + "/" + Global.prefixNetworkGraph).writeText(byteArrayToHex(network_graph))
+        }
+    }
+
+    override fun persist_scorer(scorer: ByteArray?) {
+        println("scorer");
+        if(Global.prefixScorer != "" && scorer !== null) {
+            val hex = byteArrayToHex(scorer)
+            println("scorer_bytes: $hex");
+            File(Global.homeDir + "/" + Global.prefixScorer).writeText(byteArrayToHex(scorer))
         }
     }
 }
