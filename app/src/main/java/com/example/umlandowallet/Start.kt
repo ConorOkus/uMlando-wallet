@@ -1,7 +1,10 @@
 package com.example.umlandowallet
 
+import com.example.umlandowallet.data.remote.Service
+import kotlinx.coroutines.runBlocking
 import org.ldk.batteries.ChannelManagerConstructor
 import org.ldk.enums.ConfirmationTarget
+import org.ldk.enums.Level
 import org.ldk.enums.Network
 import org.ldk.structs.*
 import org.ldk.structs.FeeEstimator.FeeEstimatorInterface
@@ -32,7 +35,7 @@ fun start(
     val txBroadcaster: BroadcasterInterface = BroadcasterInterface.new_impl(LDKBroadcaster)
 
     // Optional: Here we initialize the NetworkGraph so LDK does path finding and provides routes for us
-    val network : Network = Network.LDKNetwork_Regtest
+    val network : Network = Network.LDKNetwork_Bitcoin
     val genesisBlock : BestBlock = BestBlock.from_genesis(network)
     val genesisBlockHash : String = byteArrayToHex(genesisBlock.block_hash())
 
@@ -96,6 +99,7 @@ fun start(
     try {
         if (serializedChannelManager != "") {
             // loading from disk (restarting)
+
             Global.channelManagerConstructor = ChannelManagerConstructor(
                 serializedChannelManager.hexStringToByteArray(),
                 channelMonitors,
@@ -108,6 +112,7 @@ fun start(
                 txBroadcaster,
                 logger
             );
+
             Global.channelManager = Global.channelManagerConstructor!!.channel_manager;
             Global.channelManagerConstructor!!.chain_sync_completed(ChannelManagerEventHandler, scorer);
             Global.peerManager = Global.channelManagerConstructor!!.peer_manager;
@@ -155,7 +160,9 @@ object LDKFeeEstimator: FeeEstimatorInterface {
 // which has 1 function: log(record: Record?): Unit
 object LDKLogger : LoggerInterface {
     override fun log(record: Record?) {
-        println(record!!._args)
+        if (record!!._level == Level.LDKLevel_Debug) {
+            println(record!!._args)
+        }
     }
 }
 
@@ -170,6 +177,8 @@ object LDKBroadcaster: BroadcasterInterface.BroadcasterInterfaceInterface {
 }
 
 fun initializeNetworkGraph(genesisBlockHash: String, logger: Logger) {
+    val service = Service.create()
+
     val f = File(Global.homeDir+ "/" + Global.prefixNetworkGraph);
     if (f.exists()) {
         println("loading network graph...")
@@ -177,7 +186,31 @@ fun initializeNetworkGraph(genesisBlockHash: String, logger: Logger) {
         val readResult = NetworkGraph.read(serializedGraph, logger)
         if (readResult is Result_NetworkGraphDecodeErrorZ.Result_NetworkGraphDecodeErrorZ_OK) {
             Global.router = readResult.res
-            println("loaded network graph ok")
+
+            val rapidGossipSync = RapidGossipSync.of(Global.router);
+            var latestGraphSnapshot = ByteArray(0)
+            var latestRapidSyncTimestamp =  ""
+
+            val myOption = Global.router!!._last_rapid_gossip_sync_timestamp
+
+            if (myOption is Option_u32Z.None) {
+                println("myOption None: $myOption")
+                val tsLong = System.currentTimeMillis() / 1000
+                latestRapidSyncTimestamp = tsLong.toString()
+            }
+
+            if (myOption is Option_u32Z.Some) {
+                println("myOption Some: $myOption")
+                latestRapidSyncTimestamp = (myOption as Option_u32Z.Some).some.toString()
+            }
+
+            runBlocking {
+                latestGraphSnapshot = service.getLatestRapidSnapshot(latestRapidSyncTimestamp)
+            }
+
+            rapidGossipSync.update_network_graph(latestGraphSnapshot)
+
+            println("loaded network graph successfully")
         } else {
             println("network graph load failed")
             if (readResult is Result_NetworkGraphDecodeErrorZ.Result_NetworkGraphDecodeErrorZ_Err) {
@@ -191,6 +224,7 @@ fun initializeNetworkGraph(genesisBlockHash: String, logger: Logger) {
         }
     } else {
         // first run, creating from scratch
+        println("first run, creating from scratch")
         Global.router =
             NetworkGraph.of(genesisBlockHash.hexStringToByteArray().reversedArray(), logger)
     }
@@ -246,11 +280,9 @@ object ChannelManagerEventHandler : ChannelManagerConstructor.EventHandler {
     }
 
     override fun persist_network_graph(network_graph: ByteArray?) {
-        println("persist_network_graph");
         if(Global.prefixNetworkGraph != "" && network_graph !== null) {
-            val hex = byteArrayToHex(network_graph)
-            println("persist_network_graph_bytes: $hex");
-            File(Global.homeDir + "/" + Global.prefixNetworkGraph).writeText(byteArrayToHex(network_graph))
+            println("persist_graph_bytes: $network_graph");
+            File(Global.homeDir + "/" + Global.prefixNetworkGraph).writeBytes(network_graph)
         }
     }
 

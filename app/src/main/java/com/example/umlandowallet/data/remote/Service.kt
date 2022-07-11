@@ -12,6 +12,8 @@ interface Service {
 
     suspend fun getlatestBlockHeight() : Int
 
+    suspend fun getLatestRapidSnapshot(lastRapidSyncTimestamp: String) : ByteArray
+
     suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int) : Boolean
 
     companion object {
