@@ -12,7 +12,9 @@ interface Service {
 
     suspend fun getlatestBlockHeight() : Int
 
-    suspend fun getLatestRapidSnapshot(lastRapidSyncTimestamp: String) : ByteArray
+//    suspend fun getLatestRapidSnapshot(lastRapidSyncTimestamp: Int) : ByteArray
+    suspend fun getLatestRapidSnapshot() : ByteArray
+
 
     suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int) : Boolean
 

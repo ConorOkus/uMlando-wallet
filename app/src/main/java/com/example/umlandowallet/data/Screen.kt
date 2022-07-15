@@ -5,6 +5,7 @@ sealed class Screen(val route: String) {
     object ConnectPeerScreen: Screen("connect_peer_screen")
     object ListPeersScreen: Screen("list_peers_screen")
     object NodeIdScreen: Screen("node_id_screen")
+    object RapidGossipSync: Screen("rapid_gossip_sync_screen")
 
 
     fun withArgs(vararg args: String) : String {

@@ -37,5 +37,11 @@ fun MainScreen(navController: NavController) {
         }) {
             Text(text = "Node Id")
         }
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(onClick = {
+            navController.navigate(Screen.RapidGossipSync.route)
+        }) {
+            Text(text = "Rapid Gossip Sync")
+        }
     }
 }

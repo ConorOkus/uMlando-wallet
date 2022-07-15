@@ -30,6 +30,7 @@ fun start(
 
     // LDK logging
     val logger: Logger = Logger.new_impl(LDKLogger)
+    Global.logger = logger
 
     // Broadcasting various lightning transactions, including commitment transactions
     val txBroadcaster: BroadcasterInterface = BroadcasterInterface.new_impl(LDKBroadcaster)
@@ -187,28 +188,22 @@ fun initializeNetworkGraph(genesisBlockHash: String, logger: Logger) {
         if (readResult is Result_NetworkGraphDecodeErrorZ.Result_NetworkGraphDecodeErrorZ_OK) {
             Global.router = readResult.res
 
-            val rapidGossipSync = RapidGossipSync.of(Global.router);
-            var latestGraphSnapshot = ByteArray(0)
-            var latestRapidSyncTimestamp =  ""
-
-            val myOption = Global.router!!._last_rapid_gossip_sync_timestamp
-
-            if (myOption is Option_u32Z.None) {
-                println("myOption None: $myOption")
-                val tsLong = System.currentTimeMillis() / 1000
-                latestRapidSyncTimestamp = tsLong.toString()
-            }
-
-            if (myOption is Option_u32Z.Some) {
-                println("myOption Some: $myOption")
-                latestRapidSyncTimestamp = (myOption as Option_u32Z.Some).some.toString()
-            }
-
-            runBlocking {
-                latestGraphSnapshot = service.getLatestRapidSnapshot(latestRapidSyncTimestamp)
-            }
-
-            rapidGossipSync.update_network_graph(latestGraphSnapshot)
+//            val rapidGossipSync = RapidGossipSync.of(Global.router);
+//            var latestGraphSnapshot = ByteArray(0)
+//            var latestRapidSyncTimestamp =  0
+//
+//            val myOption = Global.router!!._last_rapid_gossip_sync_timestamp
+//
+//            if (myOption is Option_u32Z.Some) {
+//                println("myOption Some: $myOption")
+//                latestRapidSyncTimestamp = (myOption as Option_u32Z.Some).some
+//            }
+//
+//            runBlocking {
+//                latestGraphSnapshot = service.getLatestRapidSnapshot(latestRapidSyncTimestamp)
+//            }
+//
+//            rapidGossipSync.update_network_graph(latestGraphSnapshot)
 
             println("loaded network graph successfully")
         } else {
