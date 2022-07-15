@@ -39,6 +39,7 @@ class Global : Application() {
         var channelManagerConstructor: ChannelManagerConstructor? = null
         var nioPeerHandler: NioPeerHandler? = null
         var peerManager: PeerManager? = null
+        var logger: Logger? = null
 
         var router: NetworkGraph? = null
         var txFilter: Filter? = null

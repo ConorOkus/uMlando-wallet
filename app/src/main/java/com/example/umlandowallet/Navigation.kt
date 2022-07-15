@@ -5,10 +5,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.umlandowallet.data.Screen
-import com.example.umlandowallet.ui.ConnectPeerScreen
-import com.example.umlandowallet.ui.ListPeersScreen
-import com.example.umlandowallet.ui.MainScreen
-import com.example.umlandowallet.ui.NodeIdScreen
+import com.example.umlandowallet.ui.*
 
 @Composable
 fun navigation() {
@@ -26,5 +23,9 @@ fun navigation() {
         composable(route = Screen.NodeIdScreen.route) {
             NodeIdScreen()
         }
+        composable(route = Screen.RapidGossipSync.route) {
+            RapidGossipSyncScreen()
+        }
+
     }
 }
