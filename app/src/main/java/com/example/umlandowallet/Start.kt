@@ -82,12 +82,12 @@ fun start(
 
     val handshake = ChannelHandshakeConfig.with_default();
     handshake.set_minimum_depth(1);
-    userConfig.set_own_channel_config(handshake);
+    userConfig.set_channel_handshake_config(handshake);
 
-    userConfig.set_channel_options(newChannelConfig);
+    userConfig.set_channel_config(newChannelConfig);
     val newLim = ChannelHandshakeLimits.with_default()
     newLim.set_force_announced_channel_preference(false)
-    userConfig.set_peer_channel_config_limits(newLim)
+    userConfig.set_channel_handshake_limits(newLim)
 
     val params = ProbabilisticScoringParameters.with_default()
     val defaultScorer = ProbabilisticScorer.of(params, Global.router, logger).as_Score()
