@@ -32,7 +32,7 @@ fun start(
     val txBroadcaster: BroadcasterInterface = BroadcasterInterface.new_impl(LDKBroadcaster)
 
     // Optional: Here we initialize the NetworkGraph so LDK does path finding and provides routes for us
-    val network : Network = Network.LDKNetwork_Regtest
+    val network : Network = Network.LDKNetwork_Bitcoin
     val genesisBlock : BestBlock = BestBlock.from_genesis(network)
     val genesisBlockHash : String = byteArrayToHex(genesisBlock.block_hash())
 
