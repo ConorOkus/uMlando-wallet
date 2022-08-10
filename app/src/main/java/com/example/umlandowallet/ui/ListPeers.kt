@@ -31,12 +31,16 @@ fun ListPeers() {
     ) {
         Text(text = "List Peers")
     }
-    LazyColumn(Modifier.fillMaxWidth().padding(8.dp)) {
-        items(peerList) { peer ->
+    Spacer(modifier = Modifier.height(8.dp))
+    LazyColumn(Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+        if(peerList.isNotEmpty()) {
+            items(peerList) { peer ->
                 Text(text = peer)
                 Spacer(modifier = Modifier.height(8.dp))
                 Divider()
+                Spacer(modifier = Modifier.height(8.dp))
             }
+        }
     }
 }
 

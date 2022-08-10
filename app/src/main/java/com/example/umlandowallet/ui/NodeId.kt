@@ -1,9 +1,13 @@
 package com.example.umlandowallet.ui
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import com.example.umlandowallet.Global
 import com.example.umlandowallet.byteArrayToHex
 
@@ -23,5 +27,9 @@ fun NodeId() {
     }) {
         Text(text = "Node ID")
     }
-    Text(text = nodeId.value, textAlign = TextAlign.Center)
+    Spacer(modifier = Modifier.height(8.dp))
+    if(nodeId.value != "") {
+        Text(text = nodeId.value, textAlign = TextAlign.Center)
+    }
+
 }
