@@ -1,6 +1,7 @@
 package com.example.umlandowallet
 
 import android.app.Application
+import org.bitcoindevkit.Wallet
 import org.ldk.batteries.ChannelManagerConstructor
 import org.ldk.batteries.NioPeerHandler
 import org.ldk.structs.*
@@ -32,6 +33,7 @@ class Global : Application() {
 
         var refundAddressScript = ""
 
+        var wallet: Wallet? = null
         var channelManager: ChannelManager? = null
         var keysManager: KeysManager? = null
         var chainMonitor: ChainMonitor? = null

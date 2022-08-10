@@ -32,7 +32,7 @@ fun start(
     val txBroadcaster: BroadcasterInterface = BroadcasterInterface.new_impl(LDKBroadcaster)
 
     // Optional: Here we initialize the NetworkGraph so LDK does path finding and provides routes for us
-    val network : Network = Network.LDKNetwork_Bitcoin
+    val network : Network = Network.LDKNetwork_Testnet
     val genesisBlock : BestBlock = BestBlock.from_genesis(network)
     val genesisBlockHash : String = byteArrayToHex(genesisBlock.block_hash())
 
@@ -69,10 +69,14 @@ fun start(
             channelMonitorList.add(channelMonitorBytes);
         }
         channelMonitors = channelMonitorList.toTypedArray();
+
+//        val list = Global.chainMonitor!!.list_monitors()
+//        list.iterator().forEach { outPoint ->
+//            val monitor  = // Retrieve channel monitor saved in step 4
+//            Global.chainMonitor!!.as_Watch().watch_channel(outPoint, monitor)
+//        }
     }
 
-   // Initialize the channel manager for managing channel state
-    // val scorer = MultiThreadedLockableScore.of(Scorer.with_default().as_Score())
 
     // This is going to be the fee policy for __incoming__ channels. they are set upfront globally:
     val userConfig = UserConfig.with_default()
@@ -113,6 +117,8 @@ fun start(
             Global.peerManager = Global.channelManagerConstructor!!.peer_manager;
             Global.nioPeerHandler = Global.channelManagerConstructor!!.nio_peer_handler;
             Global.router = Global.channelManagerConstructor!!.net_graph;
+
+
         } else {
             // fresh start
             Global.channelManagerConstructor = ChannelManagerConstructor(
@@ -211,6 +217,7 @@ object LDKPersister: Persist.PersistInterface {
         File(Global.homeDir + "/" + Global.prefixChannelMonitor + byteArrayToHex(id.write()) + ".hex").writeText(
             byteArrayToHex(channelMonitorBytes)
         );
+        // Save MonitorUpdateId so it can be used in channel_monitor_updated
         return Result_NoneChannelMonitorUpdateErrZ.ok();
     }
 
@@ -220,12 +227,13 @@ object LDKPersister: Persist.PersistInterface {
         data: ChannelMonitor?,
         updateId: MonitorUpdateId
     ): Result_NoneChannelMonitorUpdateErrZ? {
-        if (id == null || data == null) return null;
-        val channelMonitorBytes = data.write()
+        if (id == null || data == null || update == null) return null;
+        val channelMonitorBytes = update.write()
         println("update_persisted_channel");
         File(Global.homeDir + "/" + Global.prefixChannelMonitor + byteArrayToHex(id.write()) + ".hex").writeText(
             byteArrayToHex(channelMonitorBytes)
         );
+        // Save MonitorUpdateId so it can be used in channel_monitor_updated
         return Result_NoneChannelMonitorUpdateErrZ.ok();
     }
 }
