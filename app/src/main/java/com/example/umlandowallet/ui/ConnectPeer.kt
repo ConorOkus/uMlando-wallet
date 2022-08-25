@@ -18,8 +18,8 @@ fun ConnectPeer() {
 
     Button(
         onClick = {
-            val pubKey = "038863cf8ab91046230f561cd5b386cbff8309fa02e3f0c3ed161a3aeb64a643b9"
-            val host = "203.132.94.196"
+            val pubKey = "0296e20fa99d2940b8b00117e65d27003f0d8f81a0c960f71a5466d1aadf5ea5ea"
+            val host = "69.59.18.82"
             val port = 9735
 
             GlobalScope.launch {

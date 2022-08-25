@@ -10,7 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.umlandowallet.Global
-import com.example.umlandowallet.byteArrayToHex
+import com.example.umlandowallet.toHex
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
@@ -22,8 +22,10 @@ fun ListPeers() {
             val peers = Global.peerManager!!.get_peer_node_ids()
             val newList = ArrayList(peerList)
 
+            println("List peers: $peers")
+
             peers.iterator().forEach {
-                newList.add(byteArrayToHex(it))
+                newList.add(it.toHex())
             }
 
             _peerList.value = newList

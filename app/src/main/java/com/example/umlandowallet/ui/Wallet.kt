@@ -26,6 +26,7 @@ fun Wallet() {
     Button(
         onClick = {
             val keys = generateExtendedKey(Network.TESTNET, WordCount.WORDS12, null)
+
             val descriptor: String = createDescriptor(keys)
             val changeDescriptor: String = createChangeDescriptor(keys)
 
@@ -95,6 +96,7 @@ fun Wallet() {
     Button(
         onClick = {
             setAddress(Global.wallet!!.getAddress(AddressIndex.NEW).address)
+            Log.d(TAG, "wallet address + ${Global.wallet!!.getAddress(AddressIndex.NEW).address}")
         },
     ) {
         Text(text = "Get Address")

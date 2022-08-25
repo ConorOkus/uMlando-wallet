@@ -1,7 +1,8 @@
 package com.example.umlandowallet.data.remote
 
 import com.example.umlandowallet.Global
-import com.example.umlandowallet.hexStringToByteArray
+import com.example.umlandowallet.toByteArray
+import com.example.umlandowallet.toHex
 import io.ktor.client.*
 import io.ktor.client.request.*
 import java.io.IOException
@@ -18,11 +19,15 @@ class ServiceImpl(private val client: HttpClient) : Service {
         // return client.get("http://10.0.2.2:3002/blocks/tip/height")
     }
 
+    override suspend fun broadcastTx(tx: ByteArray): String {
+        return client.post("https://blockstream.info/testnet/api/tx/${tx.toHex()}")
+    }
+
     override suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int): Boolean {
         println("LDK: attempting to connect to peer $pubkeyHex")
         return try {
             Global.nioPeerHandler!!.connect(
-                pubkeyHex.hexStringToByteArray(),
+                pubkeyHex.toByteArray(),
                 InetSocketAddress(hostname, port), 5555
             )
             println("LDK: successfully connected to peer $pubkeyHex")

@@ -25,7 +25,8 @@ fun MainScreen() {
         ConnectPeer()
         ListPeers()
         NodeId()
-
+        FundChannel()
+        OpenChannel()
     }
 }
 

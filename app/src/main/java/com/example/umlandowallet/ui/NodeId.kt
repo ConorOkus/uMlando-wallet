@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.umlandowallet.Global
-import com.example.umlandowallet.byteArrayToHex
+import com.example.umlandowallet.toHex
 
 @Composable
 fun NodeId() {
@@ -19,8 +19,8 @@ fun NodeId() {
         val nodeIdByteArray = Global.channelManager?._our_node_id
 
         nodeId.value = if (nodeIdByteArray != null) {
-            println("NODE ID: ${byteArrayToHex(nodeIdByteArray)}")
-            byteArrayToHex(nodeIdByteArray)
+            println("NODE ID: ${nodeIdByteArray.toHex()}")
+            nodeIdByteArray.toHex()
         } else {
             "Cannot retrieve node ID"
         }
@@ -30,6 +30,7 @@ fun NodeId() {
     Spacer(modifier = Modifier.height(8.dp))
     if(nodeId.value != "") {
         Text(text = nodeId.value, textAlign = TextAlign.Center)
+        Spacer(modifier = Modifier.height(8.dp))
     }
 
 }

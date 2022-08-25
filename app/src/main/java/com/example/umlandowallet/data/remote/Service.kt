@@ -12,6 +12,8 @@ interface Service {
 
     suspend fun getlatestBlockHeight() : Int
 
+    suspend fun broadcastTx(tx: ByteArray) : String
+
     suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int) : Boolean
 
     companion object {
