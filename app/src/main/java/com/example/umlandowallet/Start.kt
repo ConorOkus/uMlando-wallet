@@ -1,14 +1,6 @@
 package com.example.umlandowallet
 
-import com.example.umlandowallet.data.Tx
-import com.example.umlandowallet.data.TxStatus
-import com.example.umlandowallet.data.remote.Access
-import com.example.umlandowallet.data.remote.Access.Companion.create
 import com.example.umlandowallet.data.remote.Service
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.utils.io.errors.*
 import kotlinx.coroutines.*
 import org.ldk.batteries.ChannelManagerConstructor
 import org.ldk.enums.ConfirmationTarget
@@ -17,6 +9,7 @@ import org.ldk.structs.*
 import org.ldk.structs.FeeEstimator.FeeEstimatorInterface
 import org.ldk.structs.Logger.LoggerInterface
 import java.io.File
+import java.io.IOException
 import java.net.InetSocketAddress
 
 fun start(
