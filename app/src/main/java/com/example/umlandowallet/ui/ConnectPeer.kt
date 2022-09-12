@@ -18,9 +18,9 @@ fun ConnectPeer() {
 
     Button(
         onClick = {
-            val pubKey = "0296e20fa99d2940b8b00117e65d27003f0d8f81a0c960f71a5466d1aadf5ea5ea"
-            val host = "69.59.18.82"
-            val port = 9735
+            val pubKey = "0306599a163c56f41e6f28aafb77da7fcc573f958aa70bdab44d97ba373697f1a6"
+            val host = "10.0.2.2"
+            val port = 9500
 
             GlobalScope.launch {
                 val hasConnected = service.connectPeer(pubKey, host, port)

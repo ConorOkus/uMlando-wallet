@@ -1,9 +1,14 @@
 package com.example.umlandowallet
 
 import com.example.umlandowallet.data.remote.Service
-import com.sun.tools.javac.util.ArrayUtils
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonObject
+import org.json.JSONObject
 import org.ldk.batteries.ChannelManagerConstructor
 import org.ldk.enums.ConfirmationTarget
 import org.ldk.enums.Network
@@ -11,8 +16,8 @@ import org.ldk.structs.*
 import org.ldk.structs.FeeEstimator.FeeEstimatorInterface
 import org.ldk.structs.Logger.LoggerInterface
 import java.io.File
+import java.io.IOException
 import java.net.InetSocketAddress
-
 
 fun start(
     entropy: String,
@@ -35,7 +40,7 @@ fun start(
     val txBroadcaster: BroadcasterInterface = BroadcasterInterface.new_impl(LDKBroadcaster)
 
     // Optional: Here we initialize the NetworkGraph so LDK does path finding and provides routes for us
-    val network : Network = Network.LDKNetwork_Testnet
+    val network : Network = Network.LDKNetwork_Regtest
     val genesisBlock : BestBlock = BestBlock.from_genesis(network)
     val genesisBlockHash : ByteArray = genesisBlock.block_hash()
 
@@ -118,21 +123,36 @@ fun start(
 
             Global.channelManager = Global.channelManagerConstructor!!.channel_manager
 
-            val relevant_txids_1: Array<ByteArray> = Global.channelManager!!.as_Confirm().get_relevant_txids()
-            println("relevant_txids_1: ${relevant_txids_1}")
-            val relevant_txids_2: Array<ByteArray> = Global.channelManager!!.as_Confirm().get_relevant_txids()
-            println("relevant_txids_2: ${relevant_txids_2}")
+//            val relevantTxIds1: Array<ByteArray> = Global.channelManager!!.as_Confirm().get_relevant_txids()
+//            println("relevantTxIds1: $relevantTxIds1")
+//            val relevantTxIds2: Array<ByteArray> = Global.channelManager!!.as_Confirm().get_relevant_txids()
+//            println("relevantTxIds2: $relevantTxIds2")
+//
+//            val relevantTxIds: Array<ByteArray> = relevantTxIds1 + relevantTxIds2
+//
+//            CoroutineScope(Dispatchers.IO).launch {
+//                val service = Service.create()
+//                for (txid in relevantTxIds) {
+//                    println("txid: ${txid.reversedArray().toHex()}")
+//                    try {
+//                        val response: HttpResponse = service.getStatus(txid.reversedArray().toHex())
+//                         println("Getting confirmation: ${response.status}")
+//                    } catch (e: IOException) {
+//                        println("Get status failed" + e.message)
+//                    }
+//                }
+//            }
 
-            val relevant_txids: Array<ByteArray> = relevant_txids_1 + relevant_txids_2
+
             
             Global.channelManagerConstructor!!.chain_sync_completed(ChannelManagerEventHandler, scorer);
-            Global.peerManager = Global.channelManagerConstructor!!.peer_manager;
-            Global.nioPeerHandler = Global.channelManagerConstructor!!.nio_peer_handler;
-            Global.router = Global.channelManagerConstructor!!.net_graph;
+            Global.peerManager = Global.channelManagerConstructor!!.peer_manager
+            Global.nioPeerHandler = Global.channelManagerConstructor!!.nio_peer_handler
+            Global.router = Global.channelManagerConstructor!!.net_graph
         } else {
             // fresh start
             Global.channelManagerConstructor = ChannelManagerConstructor(
-                Network.LDKNetwork_Testnet,
+                Network.LDKNetwork_Regtest,
                 userConfig,
                 latestBlockHash.toByteArray(),
                 latestBlockHeight,

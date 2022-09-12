@@ -5,6 +5,9 @@ import io.ktor.client.engine.android.*
 import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
 import io.ktor.client.features.logging.*
+import io.ktor.client.statement.*
+import kotlinx.serialization.json.JsonObject
+import org.json.JSONObject
 
 interface Service {
 
@@ -13,6 +16,8 @@ interface Service {
     suspend fun getlatestBlockHeight() : Int
 
     suspend fun broadcastTx(tx: ByteArray) : String
+
+    suspend fun getStatus(txid: String) : HttpResponse
 
     suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int) : Boolean
 

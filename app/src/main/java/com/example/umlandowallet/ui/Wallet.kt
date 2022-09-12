@@ -25,7 +25,7 @@ fun Wallet() {
 
     Button(
         onClick = {
-            val keys = generateExtendedKey(Network.TESTNET, WordCount.WORDS12, null)
+            val keys = generateExtendedKey(Network.REGTEST, WordCount.WORDS12, null)
 
             val descriptor: String = createDescriptor(keys)
             val changeDescriptor: String = createChangeDescriptor(keys)
@@ -35,7 +35,7 @@ fun Wallet() {
             Global.wallet = Wallet(
                 descriptor,
                 changeDescriptor,
-                Network.TESTNET,
+                Network.REGTEST,
                 databaseConfig,
             )
 
@@ -55,7 +55,7 @@ fun Wallet() {
         onClick = {
             val mnemonic = File(Global.homeDir + "/" + "mnemonic").readText();
 
-            val keys = restoreExtendedKey(Network.TESTNET, mnemonic, null)
+            val keys = restoreExtendedKey(Network.REGTEST, mnemonic, null)
             val descriptor: String = createDescriptor(keys)
             val changeDescriptor: String = createChangeDescriptor(keys)
 
@@ -64,7 +64,7 @@ fun Wallet() {
             Global.wallet = Wallet(
                 descriptor,
                 changeDescriptor,
-                Network.TESTNET,
+                Network.REGTEST,
                 databaseConfig,
             )
 
@@ -141,10 +141,9 @@ private fun createChangeDescriptor(keys: ExtendedKeyInfo): String {
 }
 
 private fun createBlockchain(): Blockchain {
-    val electrumURL: String = "ssl://electrum.blockstream.info:60002"
+    val esploraURL: String = "http://10.0.2.2:3002"
 
-    val blockchainConfig =
-        BlockchainConfig.Electrum(ElectrumConfig(electrumURL, null, 5u, null, 10u))
+    val blockchainConfig = BlockchainConfig.Esplora(EsploraConfig(esploraURL, null, 5u, 20u, null))
 
     return Blockchain(blockchainConfig)
 }

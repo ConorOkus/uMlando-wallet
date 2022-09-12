@@ -23,7 +23,7 @@ fun FundChannel() {
 
 fun createChannel() {
     Global.temporaryChannelId = null;
-    val peerNodePubkey = "0296e20fa99d2940b8b00117e65d27003f0d8f81a0c960f71a5466d1aadf5ea5ea"
+    val peerNodePubkey = "0306599a163c56f41e6f28aafb77da7fcc573f958aa70bdab44d97ba373697f1a6"
 
     // public aka announced channel. such channels can route and thus have fees
     val userConfig = UserConfig.with_default()
