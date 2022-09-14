@@ -23,7 +23,7 @@ fun FundChannel() {
 
 fun createChannel() {
     Global.temporaryChannelId = null;
-    val peerNodePubkey = "0306599a163c56f41e6f28aafb77da7fcc573f958aa70bdab44d97ba373697f1a6"
+    val peerNodePubkey = "030184f49db47d8314febfcbdac515f2c36a7bea03c51afd5bcb938cbb2fbfae71"
 
     // public aka announced channel. such channels can route and thus have fees
     val userConfig = UserConfig.with_default()
@@ -33,7 +33,7 @@ fun createChannel() {
     userConfig.set_channel_config(newChannelConfig);
 
     val createChannelResult = Global.channelManager!!.create_channel(
-        peerNodePubkey.toByteArray(), 20000, 0, 1, userConfig);
+        peerNodePubkey.toByteArray(), 100000, 0, 1, userConfig);
 
     if (createChannelResult !is Result__u832APIErrorZ.Result__u832APIErrorZ_OK) {
         println("create_channel_result !is Result__u832APIErrorZ.Result__u832APIErrorZ_OK, = " + createChannelResult);

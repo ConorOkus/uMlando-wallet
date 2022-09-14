@@ -39,32 +39,16 @@ class ServiceImpl(private val client: HttpClient) : Service {
 
     override suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int): Boolean {
         println("LDK: attempting to connect to peer $pubkeyHex")
-        try {
-            // Connect and wait for the handshake to complete.
-            val address: SocketAddress = InetSocketAddress(hostname, port)
-            Global.nioPeerHandler!!.connect(pubkeyHex.toByteArray(), address, 5555)
-
-           println("LDK: successfully connected to peer $pubkeyHex")
-
-
-            // The peer's pubkey will be present in the list of peer ids.
-            val peerManager: PeerManager = Global.channelManagerConstructor!!.peer_manager
-            val peerNodeIds = peerManager._peer_node_ids
+        return try {
+            Global.nioPeerHandler!!.connect(
+                pubkeyHex.toByteArray(),
+                InetSocketAddress(hostname, port), 5555
+            )
+            println("LDK: successfully connected to peer $pubkeyHex")
+            true
         } catch (e: IOException) {
-            // Handle failure to successfully connect to a peer.
             println("connectPeer exception: " + e.message)
             false
         }
-//        return try {
-//            Global.nioPeerHandler!!.connect(
-//                pubkeyHex.toByteArray(),
-//                InetSocketAddress(hostname, port), 5555
-//            )
-//            println("LDK: successfully connected to peer $pubkeyHex")
-//            true
-//        } catch (e: IOException) {
-//            println("connectPeer exception: " + e.message)
-//            false
-//        }
     }
 }

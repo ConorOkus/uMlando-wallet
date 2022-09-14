@@ -1,6 +1,7 @@
 package com.example.umlandowallet
 
 import android.app.Application
+import org.bitcoindevkit.Blockchain
 import org.bitcoindevkit.Wallet
 import org.ldk.batteries.ChannelManagerConstructor
 import org.ldk.batteries.NioPeerHandler
@@ -46,5 +47,6 @@ class Global : Application() {
         var router: NetworkGraph? = null
         var p2pGossipSync: P2PGossipSync? = null
         var txFilter: Filter? = null
+        var blockchain: Blockchain? = null
     }
 }

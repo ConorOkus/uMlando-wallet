@@ -18,7 +18,7 @@ fun ConnectPeer() {
 
     Button(
         onClick = {
-            val pubKey = "0306599a163c56f41e6f28aafb77da7fcc573f958aa70bdab44d97ba373697f1a6"
+            val pubKey = "030184f49db47d8314febfcbdac515f2c36a7bea03c51afd5bcb938cbb2fbfae71"
             val host = "10.0.2.2"
             val port = 9500
 

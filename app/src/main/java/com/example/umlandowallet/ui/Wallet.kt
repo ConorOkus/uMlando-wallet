@@ -25,23 +25,25 @@ fun Wallet() {
 
     Button(
         onClick = {
-            val keys = generateExtendedKey(Network.REGTEST, WordCount.WORDS12, null)
+            val mnemonic: String = generateMnemonic(WordCount.WORDS12)
+            val descriptorSecretKey = DescriptorSecretKey(Network.REGTEST, mnemonic, null)
 
-            val descriptor: String = createDescriptor(keys)
-            val changeDescriptor: String = createChangeDescriptor(keys)
+            val derivedKey = descriptorSecretKey.derive(DerivationPath("m/84h/1h/0h"))
+            val externalDescriptor = "wpkh(${derivedKey.extend(DerivationPath("m/0")).asString()})"
+            val internalDescriptor = "wpkh(${derivedKey.extend(DerivationPath("m/1")).asString()})"
 
             val databaseConfig = DatabaseConfig.Memory
 
             Global.wallet = Wallet(
-                descriptor,
-                changeDescriptor,
+                internalDescriptor,
+                externalDescriptor,
                 Network.REGTEST,
                 databaseConfig,
             )
 
-            File(Global.homeDir + "/" + "mnemonic").writeText(keys.mnemonic);
+            File(Global.homeDir + "/" + "mnemonic").writeText(mnemonic);
 
-            setMnemonic(keys.mnemonic)
+            setMnemonic(mnemonic)
         },
     ) {
         Text(text = "Create Wallet")
@@ -55,15 +57,18 @@ fun Wallet() {
         onClick = {
             val mnemonic = File(Global.homeDir + "/" + "mnemonic").readText();
 
-            val keys = restoreExtendedKey(Network.REGTEST, mnemonic, null)
-            val descriptor: String = createDescriptor(keys)
-            val changeDescriptor: String = createChangeDescriptor(keys)
+            val descriptorSecretKey = DescriptorSecretKey(Network.REGTEST, mnemonic, null)
+
+            val derivedKey = descriptorSecretKey.derive(DerivationPath("m/84h/1h/0h"))
+            val externalDescriptor = "wpkh(${derivedKey.extend(DerivationPath("m/0")).asString()})"
+            println("externalDescriptor: $externalDescriptor")
+            val internalDescriptor = "wpkh(${derivedKey.extend(DerivationPath("m/1")).asString()})"
 
             val databaseConfig = DatabaseConfig.Memory
 
             Global.wallet = Wallet(
-                descriptor,
-                changeDescriptor,
+                internalDescriptor,
+                externalDescriptor,
                 Network.REGTEST,
                 databaseConfig,
             )
@@ -80,8 +85,7 @@ fun Wallet() {
     }
     Button(
         onClick = {
-            val blockchain = createBlockchain()
-            Global.wallet!!.sync(blockchain, LogProgress)
+            Global.blockchain?.let { Global.wallet!!.sync(it, LogProgress) }
 
             syncWalletStatusMessage.value = "Wallet synced"
         },
@@ -110,7 +114,8 @@ fun Wallet() {
     }
     Button(
         onClick = {
-            setBalance(Global.wallet!!.getBalance().toString())
+            println(Global.wallet!!.getBalance().toString())
+            setBalance(Global.wallet!!.getBalance().total.toString())
         },
     ) {
         Text(text = "Get Balance")
@@ -128,24 +133,6 @@ object LogProgress: Progress {
     override fun update(progress: Float, message: String?) {
         Log.d(TAG, "updating wallet $progress $message")
     }
-}
-
-private fun createDescriptor(keys: ExtendedKeyInfo): String {
-    Log.i(TAG,"Descriptor for receive addresses is wpkh(${keys.xprv}/84'/1'/0'/0/*)")
-    return ("wpkh(${keys.xprv}/84'/1'/0'/0/*)")
-}
-
-private fun createChangeDescriptor(keys: ExtendedKeyInfo): String {
-    Log.i(TAG, "Descriptor for change addresses is wpkh(${keys.xprv}/84'/1'/0'/1/*)")
-    return ("wpkh(${keys.xprv}/84'/1'/0'/1/*)")
-}
-
-private fun createBlockchain(): Blockchain {
-    val esploraURL: String = "http://10.0.2.2:3002"
-
-    val blockchainConfig = BlockchainConfig.Esplora(EsploraConfig(esploraURL, null, 5u, 20u, null))
-
-    return Blockchain(blockchainConfig)
 }
 
 
