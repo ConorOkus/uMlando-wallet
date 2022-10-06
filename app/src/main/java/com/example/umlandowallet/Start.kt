@@ -3,12 +3,10 @@ package com.example.umlandowallet
 import com.example.umlandowallet.data.remote.Service
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.JsonObject
-import org.json.JSONObject
+import org.bitcoinj.core.NetworkParameters
+import org.bitcoinj.core.Transaction
 import org.ldk.batteries.ChannelManagerConstructor
 import org.ldk.enums.ConfirmationTarget
 import org.ldk.enums.Network
@@ -16,7 +14,6 @@ import org.ldk.structs.*
 import org.ldk.structs.FeeEstimator.FeeEstimatorInterface
 import org.ldk.structs.Logger.LoggerInterface
 import java.io.File
-import java.io.IOException
 import java.net.InetSocketAddress
 
 fun start(
@@ -204,10 +201,10 @@ object LDKBroadcaster: BroadcasterInterface.BroadcasterInterfaceInterface {
 
         tx?.let {
             GlobalScope.launch {
-                val txid: String = service.broadcastTx(tx)
+                val txid = service.broadcastTx(tx.toHex())
                 println("We've broadcast a transaction with txid $txid")
             }
-        } ?: throw(IllegalStateException("Broadcaster attempted to broadcast an null transaction"))
+        } ?: throw(IllegalStateException("Broadcaster attempted to broadcast a null transaction"))
     }
 }
 
@@ -324,7 +321,7 @@ object LDKTxFilter : Filter.FilterInterface {
         Global.eventsRegisterTx = Global.eventsRegisterTx.plus(params.toString())
     }
 
-    override fun register_output(output: WatchedOutput): Option_C2Tuple_usizeTransactionZZ {
+    override fun register_output(output: WatchedOutput) {
         println("register_output");
         val params = WritableMap()
         val blockHash = output._block_hash;
@@ -335,6 +332,5 @@ object LDKTxFilter : Filter.FilterInterface {
         params.putString("script_pubkey", output._script_pubkey.toHex())
         storeEvent(Global.homeDir + "/events_register_output", params)
         Global.eventsRegisterOutput = Global.eventsRegisterOutput.plus(params.toString())
-        return Option_C2Tuple_usizeTransactionZZ.none();
     }
 }
