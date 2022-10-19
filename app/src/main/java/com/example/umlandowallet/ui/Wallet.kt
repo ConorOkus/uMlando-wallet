@@ -1,17 +1,19 @@
 package com.example.umlandowallet.ui
 
 import android.util.Log
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Button
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material.TextField
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.umlandowallet.Global
+import com.example.umlandowallet.createBlockchain
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.bitcoindevkit.*
 import java.io.File
 
@@ -22,6 +24,10 @@ fun Wallet() {
     val (mnemonic, setMnemonic) = remember { mutableStateOf("") }
     val (address, setAddress) = remember { mutableStateOf("") }
     val (balance, setBalance) = remember { mutableStateOf("") }
+
+    var sendAddress by remember {
+        mutableStateOf("")
+    }
 
     Button(
         onClick = {
@@ -63,6 +69,7 @@ fun Wallet() {
             val externalDescriptor = "wpkh(${derivedKey.extend(DerivationPath("m/0")).asString()})"
             println("externalDescriptor: $externalDescriptor")
             val internalDescriptor = "wpkh(${derivedKey.extend(DerivationPath("m/1")).asString()})"
+            println("internalDescriptor: $internalDescriptor")
 
             val databaseConfig = DatabaseConfig.Memory
 
@@ -125,6 +132,46 @@ fun Wallet() {
         Text(text = balance)
         Spacer(modifier = Modifier.height(8.dp))
     }
+
+//    Button(
+//        onClick = {
+//            val amount = 5
+//            val feeRate = 0.00000010
+//            val psbt = createTransaction(sendAddress, amount.toULong(), feeRate.toFloat())
+//
+//        },
+//    ) {
+//        Text(text = "Send")
+//    }
+//    Column(verticalArrangement = Arrangement.Center,
+//        horizontalAlignment = Alignment.CenterHorizontally,
+//        modifier = Modifier
+//            .padding(vertical = 8.dp))
+//    {
+//        TextField(
+//            value = sendAddress,
+//            onValueChange = { sendAddress = it },
+//            modifier = Modifier.fillMaxWidth()
+//        )
+//    }
+//    Spacer(modifier = Modifier.height(8.dp))
+}
+
+fun createTransaction(recipient: String, amount: ULong, feeRate: Float): PartiallySignedBitcoinTransaction {
+    return TxBuilder()
+        .addRecipient(recipient, amount)
+        .feeRate(satPerVbyte = feeRate)
+        .finish(Global.wallet!!)
+}
+
+fun sign(psbt: PartiallySignedBitcoinTransaction) {
+    Global.wallet!!.sign(psbt)
+}
+
+fun broadcast(signedPsbt: PartiallySignedBitcoinTransaction): String {
+    val blockchain = createBlockchain()
+    blockchain.broadcast(signedPsbt)
+    return signedPsbt.txid()
 }
 
 private const val TAG = "Wallet"

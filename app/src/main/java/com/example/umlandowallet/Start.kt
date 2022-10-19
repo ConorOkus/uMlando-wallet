@@ -5,8 +5,6 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.bitcoinj.core.NetworkParameters
-import org.bitcoinj.core.Transaction
 import org.ldk.batteries.ChannelManagerConstructor
 import org.ldk.enums.ConfirmationTarget
 import org.ldk.enums.Network
@@ -201,7 +199,7 @@ object LDKBroadcaster: BroadcasterInterface.BroadcasterInterfaceInterface {
 
         tx?.let {
             GlobalScope.launch {
-                val txid = service.broadcastTx(tx.toHex())
+                val txid = service.broadcastTx(tx)
                 println("We've broadcast a transaction with txid $txid")
             }
         } ?: throw(IllegalStateException("Broadcaster attempted to broadcast a null transaction"))

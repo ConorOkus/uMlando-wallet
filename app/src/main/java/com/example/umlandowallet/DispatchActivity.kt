@@ -11,9 +11,6 @@ import org.bitcoindevkit.EsploraConfig
 import java.io.File
 
 class DispatchActivity : AppCompatActivity() {
-
-    private val service = Service.create()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -63,7 +60,7 @@ class DispatchActivity : AppCompatActivity() {
     }
 }
 
-private fun createBlockchain(): Blockchain {
+fun createBlockchain(): Blockchain {
     val esploraURL: String = "http://10.0.2.2:3002"
 
     val blockchainConfig = BlockchainConfig.Esplora(EsploraConfig(esploraURL, null, 5u, 20u, null))

@@ -1,44 +1,68 @@
 package com.example.umlandowallet.ui
 
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.umlandowallet.Global
 import com.example.umlandowallet.toByteArray
-import org.ldk.structs.*
+import org.ldk.structs.ChannelHandshakeConfig
+import org.ldk.structs.Result__u832APIErrorZ
+import org.ldk.structs.UserConfig
 
 @Composable
 fun FundChannel() {
+    var pubKey by remember {
+        mutableStateOf("")
+    }
+
     Button(onClick = {
-        createChannel()
+        createChannel(pubKey)
     }) {
         Text(text = "Fund Channel")
     }
     Spacer(modifier = Modifier.height(8.dp))
+    Column(verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .padding(vertical = 8.dp))
+    {
+        TextField(
+            value = pubKey,
+            onValueChange = { pubKey = it },
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
 }
 
-fun createChannel() {
+fun createChannel(pubKey: String) {
     Global.temporaryChannelId = null;
-    val peerNodePubkey = "030184f49db47d8314febfcbdac515f2c36a7bea03c51afd5bcb938cbb2fbfae71"
 
-    // public aka announced channel. such channels can route and thus have fees
+    val amount = 100_000L
+    val pushMsat = 1_000L
+    val userId = 42L
+
+    // public aka announced channel
     val userConfig = UserConfig.with_default()
-    val newChannelConfig = ChannelConfig.with_default()
-    newChannelConfig.set_forwarding_fee_proportional_millionths(10000);
-    newChannelConfig.set_forwarding_fee_base_msat(1000);
-    userConfig.set_channel_config(newChannelConfig);
+
+    val channelHandshakeConfig = ChannelHandshakeConfig.with_default()
+    channelHandshakeConfig._announced_channel = true
+
+    userConfig._channel_handshake_config = channelHandshakeConfig
 
     val createChannelResult = Global.channelManager!!.create_channel(
-        peerNodePubkey.toByteArray(), 100000, 0, 1, userConfig);
+        pubKey.toByteArray(), amount, pushMsat, userId, userConfig
+    )
 
     if (createChannelResult !is Result__u832APIErrorZ.Result__u832APIErrorZ_OK) {
-        println("create_channel_result !is Result__u832APIErrorZ.Result__u832APIErrorZ_OK, = " + createChannelResult);
-        println("Open Channel Request Failed");
+        println("ERROR: failed to open channel with: $pubKey");
     }
 
-    println("Channel open request was sent: ${createChannelResult.is_ok}");
+    if(createChannelResult.is_ok) {
+        println("EVENT: initiated channel with peer: $pubKey");
+    }
 }

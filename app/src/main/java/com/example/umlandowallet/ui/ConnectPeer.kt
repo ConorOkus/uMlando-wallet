@@ -3,7 +3,9 @@ package com.example.umlandowallet.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.umlandowallet.data.remote.Service
@@ -14,11 +16,14 @@ import kotlinx.coroutines.launch
 fun ConnectPeer() {
     val service = Service.create()
 
+    var pubKey by remember {
+        mutableStateOf("")
+    }
     val (connectPeerStatus, setConnectPeerStatus) = remember { mutableStateOf("") }
 
     Button(
         onClick = {
-            val pubKey = "030184f49db47d8314febfcbdac515f2c36a7bea03c51afd5bcb938cbb2fbfae71"
+            val pubKey = pubKey
             val host = "10.0.2.2"
             val port = 9500
 
@@ -34,6 +39,17 @@ fun ConnectPeer() {
         },
     ) {
         Text(text = "Connect Peer")
+    }
+    Column(verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .padding(vertical = 8.dp))
+    {
+        TextField(
+            value = pubKey,
+            onValueChange = { pubKey = it },
+            modifier = Modifier.fillMaxWidth()
+        )
     }
     Spacer(modifier = Modifier.height(8.dp))
     if (connectPeerStatus != "") {
