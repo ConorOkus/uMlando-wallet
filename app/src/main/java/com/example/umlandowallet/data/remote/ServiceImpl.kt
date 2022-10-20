@@ -1,10 +1,11 @@
 package com.example.umlandowallet.data.remote
 
 import com.example.umlandowallet.Global
+import com.example.umlandowallet.data.Tx
 import com.example.umlandowallet.toByteArray
 import com.example.umlandowallet.toHex
 import io.ktor.client.*
-import io.ktor.http.*
+import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import java.io.IOException
@@ -13,25 +14,27 @@ import java.net.InetSocketAddress
 
 class ServiceImpl(private val client: HttpClient) : Service {
     override suspend fun getlatestBlockHash(): String {
-         return client.get("http://10.0.2.2:3002/blocks/tip/hash")
+        val httpResponse: HttpResponse = client.get("http://10.0.2.2:3002/blocks/tip/hash")
+        return httpResponse.body()
     }
 
     override suspend fun getlatestBlockHeight(): Int {
-         return client.get("http://10.0.2.2:3002/blocks/tip/height")
+        val httpResponse: HttpResponse = client.get("http://10.0.2.2:3002/blocks/tip/height")
+        return httpResponse.body<Int>().toInt()
     }
 
     override suspend fun broadcastTx(tx: ByteArray): String {
         val response: HttpResponse = client.post("http://10.0.2.2:3002/tx") {
-            body = tx.toHex()
+            setBody(tx.toHex())
         }
 
-        return response.toString()
+        return response.body()
     }
 
-    override suspend fun getStatus(txid: String): HttpResponse {
-//        return client.get("https://blockstream.info/testnet/api/tx/${txid}")
-        return client.get("http://10.0.2.2:3002/tx/${txid}")
+    override suspend fun getStatus(txid: String): Tx {
+        val tx: Tx = client.get("http://10.0.2.2:3002/tx/${txid}").body()
 
+        return tx
     }
 
     override suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int): Boolean {

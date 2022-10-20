@@ -3,17 +3,13 @@ package com.example.umlandowallet.ui
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material.Button
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.umlandowallet.Global
 import com.example.umlandowallet.createBlockchain
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import org.bitcoindevkit.*
 import java.io.File
 

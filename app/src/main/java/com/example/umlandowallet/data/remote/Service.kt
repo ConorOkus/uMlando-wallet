@@ -1,13 +1,16 @@
 package com.example.umlandowallet.data.remote
 
+import com.example.umlandowallet.data.Tx
+import com.example.umlandowallet.data.TxStatus
 import io.ktor.client.*
-import io.ktor.client.engine.android.*
-import io.ktor.client.features.json.*
-import io.ktor.client.features.json.serializer.*
-import io.ktor.client.features.logging.*
+import io.ktor.client.request.*
 import io.ktor.client.statement.*
-import kotlinx.serialization.json.JsonObject
-import org.json.JSONObject
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.logging.*
+import io.ktor.serialization.kotlinx.json.*
+import kotlinx.serialization.json.Json
+
 
 interface Service {
 
@@ -17,19 +20,26 @@ interface Service {
 
     suspend fun broadcastTx(tx: ByteArray) : String
 
-    suspend fun getStatus(txid: String) : HttpResponse
+    suspend fun getStatus(txid: String) : Tx
 
     suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int) : Boolean
 
     companion object {
         fun create() : Service {
             return ServiceImpl(
-                client = HttpClient(Android) {
+                client = HttpClient() {
                     install(Logging) {
-                        level = LogLevel.ALL
+                        logger = Logger.DEFAULT
+                        level = LogLevel.HEADERS
                     }
-                    install(JsonFeature) {
-                        serializer = KotlinxSerializer()
+                    install(ContentNegotiation) {
+                        json(
+                            json = Json {
+                                prettyPrint = true
+                                isLenient = true
+                                ignoreUnknownKeys = true
+                            }
+                        )
                     }
                 }
             )

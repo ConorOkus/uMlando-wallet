@@ -1,8 +1,14 @@
 package com.example.umlandowallet
 
+import com.example.umlandowallet.data.Tx
+import com.example.umlandowallet.data.TxStatus
 import com.example.umlandowallet.data.remote.Service
+import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.utils.io.errors.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.ldk.batteries.ChannelManagerConstructor
@@ -118,25 +124,25 @@ fun start(
 
             Global.channelManager = Global.channelManagerConstructor!!.channel_manager
 
-//            val relevantTxIds1: Array<ByteArray> = Global.channelManager!!.as_Confirm().get_relevant_txids()
-//            println("relevantTxIds1: $relevantTxIds1")
-//            val relevantTxIds2: Array<ByteArray> = Global.channelManager!!.as_Confirm().get_relevant_txids()
-//            println("relevantTxIds2: $relevantTxIds2")
-//
-//            val relevantTxIds: Array<ByteArray> = relevantTxIds1 + relevantTxIds2
-//
-//            CoroutineScope(Dispatchers.IO).launch {
-//                val service = Service.create()
-//                for (txid in relevantTxIds) {
-//                    println("txid: ${txid.reversedArray().toHex()}")
-//                    try {
-//                        val response: HttpResponse = service.getStatus(txid.reversedArray().toHex())
-//                         println("Getting confirmation: ${response.status}")
-//                    } catch (e: IOException) {
-//                        println("Get status failed" + e.message)
-//                    }
-//                }
-//            }
+            val relevantTxIdsFromChannelManager: Array<ByteArray> = Global.channelManager!!.as_Confirm().get_relevant_txids()
+            val relevantTxIdsFromChainMonitor: Array<ByteArray> = Global.chainMonitor!!.as_Confirm().get_relevant_txids()
+
+            val relevantTxIds: Array<ByteArray> = relevantTxIdsFromChannelManager + relevantTxIdsFromChainMonitor
+
+            CoroutineScope(Dispatchers.IO).launch {
+                val service = Service.create()
+                for (txid in relevantTxIds) {
+                    try {
+                        val response: Tx = service.getStatus(txid.reversedArray().toHex())
+                        if(!response.status.confirmed){
+                            Global.channelManager!!.as_Confirm().transaction_unconfirmed(response.txid.toByteArray())
+                            Global.chainMonitor!!.as_Confirm().transaction_unconfirmed(response.txid.toByteArray())
+                        }
+                    } catch (e: IOException) {
+                        println("Get status failed" + e.message)
+                    }
+                }
+            }
 
 
             
