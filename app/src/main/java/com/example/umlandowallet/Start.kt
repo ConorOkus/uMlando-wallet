@@ -2,15 +2,14 @@ package com.example.umlandowallet
 
 import com.example.umlandowallet.data.Tx
 import com.example.umlandowallet.data.TxStatus
+import com.example.umlandowallet.data.remote.Access
+import com.example.umlandowallet.data.remote.Access.Companion.create
 import com.example.umlandowallet.data.remote.Service
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.utils.io.errors.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.ldk.batteries.ChannelManagerConstructor
 import org.ldk.enums.ConfirmationTarget
 import org.ldk.enums.Network
@@ -123,29 +122,6 @@ fun start(
             );
 
             Global.channelManager = Global.channelManagerConstructor!!.channel_manager
-
-            val relevantTxIdsFromChannelManager: Array<ByteArray> = Global.channelManager!!.as_Confirm().get_relevant_txids()
-            val relevantTxIdsFromChainMonitor: Array<ByteArray> = Global.chainMonitor!!.as_Confirm().get_relevant_txids()
-
-            val relevantTxIds: Array<ByteArray> = relevantTxIdsFromChannelManager + relevantTxIdsFromChainMonitor
-
-            CoroutineScope(Dispatchers.IO).launch {
-                val service = Service.create()
-                for (txid in relevantTxIds) {
-                    try {
-                        val response: Tx = service.getStatus(txid.reversedArray().toHex())
-                        if(!response.status.confirmed){
-                            Global.channelManager!!.as_Confirm().transaction_unconfirmed(response.txid.toByteArray())
-                            Global.chainMonitor!!.as_Confirm().transaction_unconfirmed(response.txid.toByteArray())
-                        }
-                    } catch (e: IOException) {
-                        println("Get status failed" + e.message)
-                    }
-                }
-            }
-
-
-            
             Global.channelManagerConstructor!!.chain_sync_completed(ChannelManagerEventHandler, scorer);
             Global.peerManager = Global.channelManagerConstructor!!.peer_manager
             Global.nioPeerHandler = Global.channelManagerConstructor!!.nio_peer_handler

@@ -1,11 +1,7 @@
 package com.example.umlandowallet.data.remote
 
 import com.example.umlandowallet.data.Tx
-import com.example.umlandowallet.data.TxStatus
 import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.serialization.kotlinx.json.*

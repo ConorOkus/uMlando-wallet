@@ -32,9 +32,7 @@ class ServiceImpl(private val client: HttpClient) : Service {
     }
 
     override suspend fun getStatus(txid: String): Tx {
-        val tx: Tx = client.get("http://10.0.2.2:3002/tx/${txid}").body()
-
-        return tx
+        return client.get("http://10.0.2.2:3002/tx/${txid}").body()
     }
 
     override suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int): Boolean {

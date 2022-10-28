@@ -10,6 +10,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.umlandowallet.Global
 import com.example.umlandowallet.createBlockchain
+import com.example.umlandowallet.data.remote.Access
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import org.bitcoindevkit.*
 import java.io.File
 
@@ -63,9 +68,7 @@ fun Wallet() {
 
             val derivedKey = descriptorSecretKey.derive(DerivationPath("m/84h/1h/0h"))
             val externalDescriptor = "wpkh(${derivedKey.extend(DerivationPath("m/0")).asString()})"
-            println("externalDescriptor: $externalDescriptor")
             val internalDescriptor = "wpkh(${derivedKey.extend(DerivationPath("m/1")).asString()})"
-            println("internalDescriptor: $internalDescriptor")
 
             val databaseConfig = DatabaseConfig.Memory
 
@@ -88,7 +91,19 @@ fun Wallet() {
     }
     Button(
         onClick = {
-            Global.blockchain?.let { Global.wallet!!.sync(it, LogProgress) }
+            val relevantTxIdsFromChannelManager: Array<ByteArray> = Global.channelManager!!.as_Confirm()._relevant_txids
+            val relevantTxIdsFromChainMonitor: Array<ByteArray> = Global.chainMonitor!!.as_Confirm()._relevant_txids
+
+            val relevantTxIds: Array<ByteArray> = relevantTxIdsFromChannelManager + relevantTxIdsFromChainMonitor
+
+            CoroutineScope(Dispatchers.IO).launch {
+                val access = Access.create()
+                // Sync BDK wallet
+                access.syncWallet(Global.wallet!!, LogProgress)
+
+                // Sync LDK/Lightning
+                access.syncTransactionsUnconfirmed(relevantTxIds, Global.channelManager!!, Global.chainMonitor!!)
+            }
 
             syncWalletStatusMessage.value = "Wallet synced"
         },
