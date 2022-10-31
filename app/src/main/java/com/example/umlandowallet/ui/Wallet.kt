@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import com.example.umlandowallet.Global
 import com.example.umlandowallet.createBlockchain
 import com.example.umlandowallet.data.remote.Access
+import com.example.umlandowallet.toHex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -103,6 +104,7 @@ fun Wallet() {
 
                 // Sync LDK/Lightning
                 access.syncTransactionsUnconfirmed(relevantTxIds, Global.channelManager!!, Global.chainMonitor!!)
+                access.syncTransactionConfirmed(relevantTxIds, Global.channelManager!!, Global.chainMonitor!!)
             }
 
             syncWalletStatusMessage.value = "Wallet synced"
@@ -115,14 +117,14 @@ fun Wallet() {
         Text(text = syncWalletStatusMessage.value)
         Spacer(modifier = Modifier.height(8.dp))
     }
-    Button(
-        onClick = {
-            setAddress(Global.wallet!!.getAddress(AddressIndex.NEW).address)
-            Log.d(TAG, "wallet address + ${Global.wallet!!.getAddress(AddressIndex.NEW).address}")
-        },
-    ) {
-        Text(text = "Get Address")
-    }
+//    Button(
+//        onClick = {
+//            setAddress(Global.wallet!!.getAddress(AddressIndex.NEW).address)
+//            Log.d(TAG, "wallet address + ${Global.wallet!!.getAddress(AddressIndex.NEW).address}")
+//        },
+//    ) {
+//        Text(text = "Get Address")
+//    }
     Spacer(modifier = Modifier.height(8.dp))
     if (address != "") {
         SelectionContainer {
@@ -130,14 +132,14 @@ fun Wallet() {
         }
         Spacer(modifier = Modifier.height(8.dp))
     }
-    Button(
-        onClick = {
-            println(Global.wallet!!.getBalance().toString())
-            setBalance(Global.wallet!!.getBalance().total.toString())
-        },
-    ) {
-        Text(text = "Get Balance")
-    }
+//    Button(
+//        onClick = {
+//            println(Global.wallet!!.getBalance().toString())
+//            setBalance(Global.wallet!!.getBalance().total.toString())
+//        },
+//    ) {
+//        Text(text = "Get Balance")
+//    }
     Spacer(modifier = Modifier.height(8.dp))
     if (balance != "") {
         Text(text = balance)
@@ -165,14 +167,29 @@ fun Wallet() {
 //            modifier = Modifier.fillMaxWidth()
 //        )
 //    }
-//    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(8.dp))
 }
 
-fun createTransaction(recipient: String, amount: ULong, feeRate: Float): PartiallySignedBitcoinTransaction {
-    return TxBuilder()
-        .addRecipient(recipient, amount)
-        .feeRate(satPerVbyte = feeRate)
+//fun createTransaction(recipient: String, amount: ULong, feeRate: Float): TxBuilderResult {
+//    return TxBuilder()
+//        .addRecipient(recipient, amount)
+//        .feeRate(satPerVbyte = feeRate)
+//        .finish(Global.wallet!!)
+//}
+
+fun buildFundingTx(value: Long, script: ByteArray): ByteArray {
+    val blockchain = createBlockchain()
+    Global.wallet!!.sync(blockchain, LogProgress)
+    val scriptListUByte: List<UByte> = script.toUByteArray().asList()
+    val outputScript: Script = Script(scriptListUByte)
+    val (psbt, txDetails) = TxBuilder()
+        .addRecipient(outputScript, value.toULong())
+        .feeRate(4.0F)
         .finish(Global.wallet!!)
+    Global.wallet!!.sign(psbt)
+    val rawTx = psbt.extractTx().toUByteArray().toByteArray()
+    println("The raw funding tx is ${rawTx.toHex()}")
+    return rawTx
 }
 
 fun sign(psbt: PartiallySignedBitcoinTransaction) {

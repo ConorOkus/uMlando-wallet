@@ -7,9 +7,15 @@ import org.ldk.structs.ChannelManager
 import java.io.File
 
 interface Access {
+    suspend fun sync(): Unit
+
     suspend fun syncWallet(wallet: Wallet, logProgress: Progress): Unit
 
-    suspend fun sync(): Unit
+    suspend fun syncTransactionConfirmed(
+        relevantTxIds: Array<ByteArray>,
+        channelManager: ChannelManager,
+        chainMonitor: ChainMonitor
+    ) : Unit
 
     suspend fun syncTransactionsUnconfirmed(
         relevantTxIds: Array<ByteArray>,

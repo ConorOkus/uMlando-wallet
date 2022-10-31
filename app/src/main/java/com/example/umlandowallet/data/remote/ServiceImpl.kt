@@ -1,7 +1,10 @@
 package com.example.umlandowallet.data.remote
 
 import com.example.umlandowallet.Global
+import com.example.umlandowallet.data.MerkleProof
 import com.example.umlandowallet.data.Tx
+import com.example.umlandowallet.data.TxResponse
+import com.example.umlandowallet.data.TxStatus
 import com.example.umlandowallet.toByteArray
 import com.example.umlandowallet.toHex
 import io.ktor.client.*
@@ -31,8 +34,26 @@ class ServiceImpl(private val client: HttpClient) : Service {
         return response.body()
     }
 
-    override suspend fun getStatus(txid: String): Tx {
-        return client.get("http://10.0.2.2:3002/tx/${txid}").body()
+    override suspend fun getTx(txid: String): TxResponse {
+        val response: HttpResponse = client.get("http://10.0.2.2:3002/tx/${txid}")
+
+        val txJson: Tx = response.body()
+        val txByteArray: ByteArray = response.body()
+
+        return TxResponse(txByteArray, txJson)
+    }
+
+    override suspend fun getTxStatus(txid: String): TxStatus {
+        val response: Tx = client.get("http://10.0.2.2:3002/tx/${txid}").body()
+        return response.status
+    }
+
+    override suspend fun getHeader(hash: String): String {
+        return client.get("http://10.0.2.2:3002/block/${hash}/header").body()
+    }
+
+    override suspend fun getMerkleProof(txid: String): MerkleProof {
+        return client.get("http://10.0.2.2:3002/tx/${txid}/merkle-proof").body()
     }
 
     override suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int): Boolean {

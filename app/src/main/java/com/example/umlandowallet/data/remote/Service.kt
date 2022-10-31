@@ -1,6 +1,9 @@
 package com.example.umlandowallet.data.remote
 
+import com.example.umlandowallet.data.MerkleProof
 import com.example.umlandowallet.data.Tx
+import com.example.umlandowallet.data.TxResponse
+import com.example.umlandowallet.data.TxStatus
 import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
@@ -16,7 +19,13 @@ interface Service {
 
     suspend fun broadcastTx(tx: ByteArray) : String
 
-    suspend fun getStatus(txid: String) : Tx
+    suspend fun getTx(txid: String) : TxResponse
+
+    suspend fun getTxStatus(txid: String) : TxStatus
+
+    suspend fun getHeader(hash: String) : String
+
+    suspend fun getMerkleProof(txid: String) : MerkleProof
 
     suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int) : Boolean
 

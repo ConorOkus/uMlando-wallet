@@ -1,5 +1,6 @@
 package com.example.umlandowallet
 
+import com.example.umlandowallet.ui.buildFundingTx
 import org.ldk.structs.*
 
 fun handleEvent(event: Event) {
@@ -20,7 +21,14 @@ fun handleEvent(event: Event) {
             storeEvent("${Global.homeDir}/events_funding_generation_ready", params)
             Global.eventsFundingGenerationReady = Global.eventsFundingGenerationReady.plus(params.toString())
 
-            // Use BDK to build the funding transaction - https://github.com/bitcoindevkit/bdk-ffi/issues/159
+            val rawTx = buildFundingTx(event.channel_value_satoshis, event.output_script)
+
+            Global.channelManager!!.funding_transaction_generated(
+                event.temporary_channel_id,
+                event.counterparty_node_id,
+                rawTx
+            )
+
         }
     }
 
