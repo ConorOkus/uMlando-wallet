@@ -3,22 +3,19 @@ package com.example.umlandowallet
 import java.io.File
 import java.math.BigInteger
 import java.security.MessageDigest
+import com.google.common.io.BaseEncoding
+
+fun ByteArray.toHex(): String {
+    return BaseEncoding.base16().encode(this).lowercase()
+}
+
+fun String.toByteArray(): ByteArray {
+    return BaseEncoding.base16().decode(this.uppercase())
+}
 
 fun sha256(input:String): String {
     val md = MessageDigest.getInstance("SHA-256")
     return BigInteger(1, md.digest(input.toByteArray())).toString(16).padStart(32, '0')
-}
-
-fun byteArrayToHex(bytesArg: ByteArray): String {
-    return bytesArg.joinToString("") { String.format("%02X", (it.toInt() and 0xFF)) }.lowercase()
-}
-
-fun String.hexStringToByteArray(): ByteArray {
-    check(length % 2 == 0) { "Must have an even length" }
-
-    return chunked(2)
-        .map { it.toInt(16).toByte() }
-        .toByteArray()
 }
 
 fun storeEvent(eventsPath: String, params: WritableMap) {

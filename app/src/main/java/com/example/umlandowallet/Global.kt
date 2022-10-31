@@ -1,6 +1,7 @@
 package com.example.umlandowallet
 
 import android.app.Application
+import org.bitcoindevkit.Blockchain
 import org.bitcoindevkit.Wallet
 import org.ldk.batteries.ChannelManagerConstructor
 import org.ldk.batteries.NioPeerHandler
@@ -16,9 +17,9 @@ class Global : Application() {
         val prefixScorer = "scorer"
 
 
-        val feerateFast = 7500; // estimate fee rate in BTC/kB
-        val feerateMedium = 7500; // estimate fee rate in BTC/kB
-        val feerateSlow = 7500; // estimate fee rate in BTC/kB
+        val feerateFast = 5000; // estimate fee rate in BTC/kB
+        val feerateMedium = 5000; // estimate fee rate in BTC/kB
+        val feerateSlow = 5000; // estimate fee rate in BTC/kB
 
         var eventsTxBroadcast: Array<String> = arrayOf<String>()
         var eventsPaymentSent: Array<String> = arrayOf<String>()
@@ -38,11 +39,14 @@ class Global : Application() {
         var keysManager: KeysManager? = null
         var chainMonitor: ChainMonitor? = null
         var temporaryChannelId: ByteArray? = null
+        var counterpartyNodeId: ByteArray? = null
         var channelManagerConstructor: ChannelManagerConstructor? = null
         var nioPeerHandler: NioPeerHandler? = null
         var peerManager: PeerManager? = null
 
         var router: NetworkGraph? = null
+        var p2pGossipSync: P2PGossipSync? = null
         var txFilter: Filter? = null
+        var blockchain: Blockchain? = null
     }
 }

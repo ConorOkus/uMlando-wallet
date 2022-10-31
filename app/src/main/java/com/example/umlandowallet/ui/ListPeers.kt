@@ -3,14 +3,16 @@ package com.example.umlandowallet.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Button
-import androidx.compose.material.Divider
-import androidx.compose.material.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.Divider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.umlandowallet.Global
-import com.example.umlandowallet.byteArrayToHex
+import com.example.umlandowallet.toHex
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
@@ -22,8 +24,10 @@ fun ListPeers() {
             val peers = Global.peerManager!!.get_peer_node_ids()
             val newList = ArrayList(peerList)
 
+            println("List peers: $peers")
+
             peers.iterator().forEach {
-                newList.add(byteArrayToHex(it))
+                newList.add(it.toHex())
             }
 
             _peerList.value = newList

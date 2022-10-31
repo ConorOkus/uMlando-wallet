@@ -23,9 +23,10 @@ fun MainScreen() {
     ) {
         Wallet()
         ConnectPeer()
-        ListPeers()
-        NodeId()
-
+//        ListPeers()
+//        NodeId()
+        FundChannel()
+        OpenChannel()
     }
 }
 
