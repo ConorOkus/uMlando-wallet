@@ -17,9 +17,9 @@ class Global : Application() {
         val prefixScorer = "scorer"
 
 
-        val feerateFast = 5000; // estimate fee rate in BTC/kB
-        val feerateMedium = 5000; // estimate fee rate in BTC/kB
-        val feerateSlow = 5000; // estimate fee rate in BTC/kB
+        val feerateFast = 5000 // estimate fee rate in BTC/kB
+        val feerateMedium = 5000 // estimate fee rate in BTC/kB
+        val feerateSlow = 5000 // estimate fee rate in BTC/kB
 
         var eventsTxBroadcast: Array<String> = arrayOf<String>()
         var eventsPaymentSent: Array<String> = arrayOf<String>()

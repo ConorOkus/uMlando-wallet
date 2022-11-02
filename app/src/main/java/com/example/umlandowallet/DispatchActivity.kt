@@ -2,14 +2,12 @@ package com.example.umlandowallet
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import com.example.umlandowallet.data.remote.Access
-import com.example.umlandowallet.data.remote.Service
-import kotlinx.coroutines.*
-import org.bitcoindevkit.Blockchain
-import org.bitcoindevkit.BlockchainConfig
-import org.bitcoindevkit.EsploraConfig
+import org.bitcoindevkit.*
 import java.io.File
+
+private const val TAG = "DispatchActivity"
 
 class DispatchActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,6 +52,34 @@ class DispatchActivity : AppCompatActivity() {
 
         println("serializedChannelManager: $serializedChannelManager")
         println("serializedChannelMonitors: $serializedChannelMonitors")
+
+        var mnemonic: String
+
+        try {
+            mnemonic = File(Global.homeDir + "/" + "mnemonic").readText()
+        } catch (e: Throwable) {
+            // if mnemonic doesn't exist, generate one and save it
+            Log.i(TAG, "No mnemonic backup, we'll create a new wallet")
+            mnemonic = generateMnemonic(WordCount.WORDS12)
+            File(Global.homeDir + "/" + "mnemonic").writeText(mnemonic)
+        }
+        
+        val descriptorSecretKey = DescriptorSecretKey(Network.REGTEST, mnemonic, null)
+
+        val derivedKey = descriptorSecretKey.derive(DerivationPath("m/84h/1h/0h"))
+        val externalDescriptor = "wpkh(${derivedKey.extend(DerivationPath("m/0")).asString()})"
+        val internalDescriptor = "wpkh(${derivedKey.extend(DerivationPath("m/1")).asString()})"
+
+        val databaseConfig = DatabaseConfig.Memory
+
+        Global.wallet = Wallet(
+            internalDescriptor,
+            externalDescriptor,
+            Network.REGTEST,
+            databaseConfig,
+        )
+
+        Log.i(TAG, "Successfully created/restored wallet with mnemonic $mnemonic")
 
         start(entropy, latestBlockHeight.toInt(), latestBlockHash, serializedChannelManager, serializedChannelMonitors)
 
