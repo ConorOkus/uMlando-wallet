@@ -72,7 +72,7 @@ fun createChannel(pubKey: String) {
     val userConfig = UserConfig.with_default()
 
     val channelHandshakeConfig = ChannelHandshakeConfig.with_default()
-    channelHandshakeConfig._announced_channel = true
+    channelHandshakeConfig._announced_channel = false
 
     userConfig._channel_handshake_config = channelHandshakeConfig
 
