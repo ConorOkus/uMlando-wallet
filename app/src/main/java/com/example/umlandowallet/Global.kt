@@ -48,5 +48,6 @@ class Global : Application() {
         var p2pGossipSync: P2PGossipSync? = null
         var txFilter: Filter? = null
         var blockchain: Blockchain? = null
+        var scorer: MultiThreadedLockableScore? = null
     }
 }

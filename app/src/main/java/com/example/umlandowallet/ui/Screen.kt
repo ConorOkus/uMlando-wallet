@@ -6,5 +6,6 @@ sealed class Screen(val route: String) {
     object NodeIdScreen : Screen("node_id_screen")
     object ListPeersScreen : Screen("list_peers")
     object ConnectPeerScreen : Screen("connect_peer")
+    object OpenChannelScreen : Screen("open_channel")
     object RecoveryPhraseScreen : Screen("recovery_phrase")
 }

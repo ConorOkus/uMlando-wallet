@@ -11,7 +11,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.umlandowallet.Global
 import com.example.umlandowallet.R
+import org.bitcoindevkit.AddressIndex
 
 @Composable
 fun SettingsScreen(navController: NavController) {
@@ -133,7 +135,14 @@ fun SettingsScreen(navController: NavController) {
         }
 
         Button(
-            onClick = {},
+            onClick = {
+                navController.navigate(Screen.OpenChannelScreen.route) {
+                    navController.graph.startDestinationRoute?.let { route ->
+                        popUpTo(route)
+                    }
+                    launchSingleTop = true
+                }
+            },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xfff0f0f0)),
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier
@@ -186,6 +195,52 @@ fun SettingsScreen(navController: NavController) {
         ) {
             Text(
                 text = "Recovery phrase",
+                fontWeight = FontWeight.Normal,
+                color = Color(0xff2f2f2f)
+
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(
+                painter = painterResource(id = R.drawable.ic_hicon_right_arrow),
+                contentDescription = "Right arrow icon",
+                tint = Color(0xff000000)
+            )
+        }
+        Button(
+            onClick = {
+                println("New bitcoin address: ${Global.wallet!!.getAddress(AddressIndex.NEW).address}")
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xfff0f0f0)),
+            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier
+                .size(width = 400.dp, height = 70.dp)
+                .padding(start = 24.dp, end = 24.dp, top = 24.dp)
+        ) {
+            Text(
+                text = "Get new address",
+                fontWeight = FontWeight.Normal,
+                color = Color(0xff2f2f2f)
+
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(
+                painter = painterResource(id = R.drawable.ic_hicon_right_arrow),
+                contentDescription = "Right arrow icon",
+                tint = Color(0xff000000)
+            )
+        }
+        Button(
+            onClick = {
+                println("On chain balance: ${Global.wallet!!.getBalance()}")
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xfff0f0f0)),
+            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier
+                .size(width = 400.dp, height = 70.dp)
+                .padding(start = 24.dp, end = 24.dp, top = 24.dp)
+        ) {
+            Text(
+                text = "Get new address",
                 fontWeight = FontWeight.Normal,
                 color = Color(0xff2f2f2f)
 

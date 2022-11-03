@@ -11,6 +11,11 @@ interface Access {
 
     suspend fun syncWallet(wallet: Wallet, logProgress: Progress): Unit
 
+    suspend fun syncBestBlockConnected(
+        channelManager: ChannelManager,
+        chainMonitor: ChainMonitor
+    ) : Unit
+
     suspend fun syncTransactionConfirmed(
         relevantTxIds: Array<ByteArray>,
         channelManager: ChannelManager,

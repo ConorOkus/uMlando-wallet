@@ -25,6 +25,21 @@ class AccessImpl(
         wallet.sync(blockchain, LogProgress)
     }
 
+    override suspend fun syncBestBlockConnected(
+        channelManager: ChannelManager,
+        chainMonitor: ChainMonitor
+    ) {
+        val service = Service.create()
+
+        val height = service.getlatestBlockHeight()
+        val hash = service.getlatestBlockHash()
+        val header = service.getHeader(hash)
+
+        channelManager.as_Confirm().best_block_updated(header.toByteArray(), height)
+        chainMonitor.as_Confirm().best_block_updated(header.toByteArray(), height)
+    }
+
+
     override suspend fun syncTransactionConfirmed(
         relevantTxIds: Array<ByteArray>,
         channelManager: ChannelManager,
@@ -37,13 +52,14 @@ class AccessImpl(
             val txId = txid.reversedArray().toHex()
             val txStatus: TxStatus = service.getTxStatus(txId)
             if (txStatus.confirmed) {
+                val hexTx = service.getHexTx(txId)
                 val (txByteArray, txJson) = service.getTx(txId)
                 if (txJson.status.block_height != null) {
                     val blockHeader = service.getHeader(txJson.status.block_hash)
                     val merkleProof = service.getMerkleProof(txId)
                     if (txJson.status.block_height == merkleProof.block_height) {
                         confirmedTxs.add(ConfirmedTx(
-                                tx = txByteArray,
+                                tx = hexTx.toByteArray(),
                                 block_height = txJson.status.block_height,
                                 block_header = blockHeader,
                                 merkle_proof_pos = merkleProof.pos
