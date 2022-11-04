@@ -7,10 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
-import com.example.umlandowallet.ui.settings.ConnectPeerScreen
-import com.example.umlandowallet.ui.settings.ListPeersScreen
-import com.example.umlandowallet.ui.settings.NodeIdScreen
-import com.example.umlandowallet.ui.settings.RecoveryPhraseScreen
+import com.example.umlandowallet.ui.settings.*
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 
@@ -122,6 +119,23 @@ fun Navigation(
                 slideOutOfContainer(AnimatedContentScope.SlideDirection.Down, animationSpec = tween(animationDuration))
             }
         ) { ConnectPeerScreen() }
+
+        // Open a channel
+        composable(
+            route = Screen.OpenChannelScreen.route,
+            enterTransition = {
+                slideIntoContainer(AnimatedContentScope.SlideDirection.Up, animationSpec = tween(animationDuration))
+            },
+            popEnterTransition = {
+                slideIntoContainer(AnimatedContentScope.SlideDirection.Up, animationSpec = tween(animationDuration))
+            },
+            exitTransition = {
+                slideOutOfContainer(AnimatedContentScope.SlideDirection.Down, animationSpec = tween(animationDuration))
+            },
+            popExitTransition = {
+                slideOutOfContainer(AnimatedContentScope.SlideDirection.Down, animationSpec = tween(animationDuration))
+            }
+        ) { OpenChannelScreen() }
 
         // Recovery phrase
         composable(

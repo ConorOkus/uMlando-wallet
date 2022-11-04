@@ -70,6 +70,8 @@ class DispatchActivity : AppCompatActivity() {
         val externalDescriptor = "wpkh(${derivedKey.extend(DerivationPath("m/0")).asString()})"
         val internalDescriptor = "wpkh(${derivedKey.extend(DerivationPath("m/1")).asString()})"
 
+        // USE BDK WALLET ENTROPY TO SEED LDK
+
         val databaseConfig = DatabaseConfig.Memory
 
         Global.wallet = Wallet(

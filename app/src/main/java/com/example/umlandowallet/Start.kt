@@ -3,6 +3,7 @@ package com.example.umlandowallet
 import com.example.umlandowallet.data.remote.Service
 import kotlinx.coroutines.*
 import org.ldk.batteries.ChannelManagerConstructor
+import org.ldk.enums.ChannelMonitorUpdateStatus
 import org.ldk.enums.ConfirmationTarget
 import org.ldk.enums.Network
 import org.ldk.structs.*
@@ -33,9 +34,9 @@ fun start(
     val txBroadcaster: BroadcasterInterface = BroadcasterInterface.new_impl(LDKBroadcaster)
 
     // Optional: Here we initialize the NetworkGraph so LDK does path finding and provides routes for us
-    val network : Network = Network.LDKNetwork_Regtest
-    val genesisBlock : BestBlock = BestBlock.from_genesis(network)
-    val genesisBlockHash : ByteArray = genesisBlock.block_hash()
+    val network: Network = Network.LDKNetwork_Regtest
+    val genesisBlock: BestBlock = BestBlock.from_genesis(network)
+    val genesisBlockHash: ByteArray = genesisBlock.block_hash()
 
     initializeNetworkGraph(genesisBlockHash, logger)
 
@@ -43,7 +44,7 @@ fun start(
     val persister: Persist = Persist.new_impl(LDKPersister)
 
     // Filter the transactions we want to monitor on chain
-    val txFilter : Filter = Filter.new_impl(LDKTxFilter)
+    val txFilter: Filter = Filter.new_impl(LDKTxFilter)
     val filter = Option_FilterZ.some(txFilter)
 
     // Monitor the chain for lighting transactions that are relevant to our
@@ -97,6 +98,7 @@ fun start(
     val params = ProbabilisticScoringParameters.with_default()
     val defaultScorer = ProbabilisticScorer.of(params, Global.router, logger).as_Score()
     val scorer = MultiThreadedLockableScore.of(defaultScorer)
+    Global.scorer = scorer
 
     try {
         if (serializedChannelManager != "") {
@@ -115,7 +117,10 @@ fun start(
             );
 
             Global.channelManager = Global.channelManagerConstructor!!.channel_manager
-            Global.channelManagerConstructor!!.chain_sync_completed(ChannelManagerEventHandler, scorer);
+            Global.channelManagerConstructor!!.chain_sync_completed(
+                ChannelManagerEventHandler,
+                scorer
+            );
             Global.peerManager = Global.channelManagerConstructor!!.peer_manager
             Global.nioPeerHandler = Global.channelManagerConstructor!!.nio_peer_handler
             Global.router = Global.channelManagerConstructor!!.net_graph
@@ -134,7 +139,10 @@ fun start(
                 logger
             );
             Global.channelManager = Global.channelManagerConstructor!!.channel_manager;
-            Global.channelManagerConstructor!!.chain_sync_completed(ChannelManagerEventHandler, scorer);
+            Global.channelManagerConstructor!!.chain_sync_completed(
+                ChannelManagerEventHandler,
+                scorer
+            );
             Global.peerManager = Global.channelManagerConstructor!!.peer_manager;
             Global.nioPeerHandler = Global.channelManagerConstructor!!.nio_peer_handler;
             Global.router = Global.channelManagerConstructor!!.net_graph;
@@ -152,7 +160,7 @@ fun start(
 
 // To create a FeeEstimator we need to provide an object that implements the FeeEstimatorInterface
 // which has 1 function: get_est_sat_per_1000_weight(conf_target: ConfirmationTarget?): Int
-object LDKFeeEstimator: FeeEstimatorInterface {
+object LDKFeeEstimator : FeeEstimatorInterface {
     override fun get_est_sat_per_1000_weight(conf_target: ConfirmationTarget?): Int {
         return Global.feerateFast
     }
@@ -168,7 +176,7 @@ object LDKLogger : LoggerInterface {
 
 // To create a transaction broadcaster we need provide an object that implements the BroadcasterInterface
 // which has 1 function broadcast_transaction(tx: ByteArray?)
-object LDKBroadcaster: BroadcasterInterface.BroadcasterInterfaceInterface {
+object LDKBroadcaster : BroadcasterInterface.BroadcasterInterfaceInterface {
     override fun broadcast_transaction(tx: ByteArray?): Unit {
         val service = Service.create()
 
@@ -182,7 +190,7 @@ object LDKBroadcaster: BroadcasterInterface.BroadcasterInterfaceInterface {
 }
 
 fun initializeNetworkGraph(genesisBlockHash: ByteArray, logger: Logger) {
-    val f = File(Global.homeDir+ "/" + Global.prefixNetworkGraph);
+    val f = File(Global.homeDir + "/" + Global.prefixNetworkGraph);
 
     if (f.exists()) {
         println("loading network graph from: ${Global.homeDir + "/" + Global.prefixNetworkGraph}")
@@ -214,20 +222,30 @@ fun initializeNetworkGraph(genesisBlockHash: ByteArray, logger: Logger) {
 
 // To create a Perisister for our Channel Monitors we need to provide an object that implements the PersistInterface
 // which has 2 functions persist_new_channel & update_persisted_channel
-object LDKPersister: Persist.PersistInterface {
+object LDKPersister : Persist.PersistInterface {
     override fun persist_new_channel(
         id: OutPoint?,
         data: ChannelMonitor?,
         updateId: MonitorUpdateId?
-    ): Result_NoneChannelMonitorUpdateErrZ? {
-        if (id == null || data == null) return null;
-        val channelMonitorBytes = data.write()
-        println("persist_new_channel")
-        File(Global.homeDir + "/" + Global.prefixChannelMonitor + id.write().toHex() + ".hex").writeText(
-            channelMonitorBytes.toHex()
-        );
-        // Save MonitorUpdateId so it can be used in channel_monitor_updated
-        return Result_NoneChannelMonitorUpdateErrZ.ok();
+    ): ChannelMonitorUpdateStatus? {
+        return try {
+            println("persist_new_channel")
+            if (data != null) {
+                if (id != null) {
+                    File(
+                        Global.homeDir + "/" + Global.prefixChannelMonitor + id.write()
+                            .toHex() + ".hex"
+                    ).writeText(
+                        data.write().toHex()
+                    )
+                }
+            }
+            ChannelMonitorUpdateStatus.LDKChannelMonitorUpdateStatus_Completed
+        } catch (e: Exception) {
+            ChannelMonitorUpdateStatus.LDKChannelMonitorUpdateStatus_PermanentFailure
+        }
+
+
     }
 
     override fun update_persisted_channel(
@@ -235,15 +253,25 @@ object LDKPersister: Persist.PersistInterface {
         update: ChannelMonitorUpdate?,
         data: ChannelMonitor?,
         updateId: MonitorUpdateId
-    ): Result_NoneChannelMonitorUpdateErrZ? {
-        if (id == null || data == null || update == null) return null;
-        val channelMonitorBytes = update.write()
-        println("update_persisted_channel");
-        File(Global.homeDir + "/" + Global.prefixChannelMonitor + id.write().toHex() + ".hex").writeText(
-            channelMonitorBytes.toHex()
-        );
-        // Save MonitorUpdateId so it can be used in channel_monitor_updated
-        return Result_NoneChannelMonitorUpdateErrZ.ok();
+    ): ChannelMonitorUpdateStatus? {
+        println("update_persisted_channel")
+        return try {
+            if (id != null) {
+                if (update != null) {
+                    File(
+                        Global.homeDir + "/" + Global.prefixChannelMonitor + id.write()
+                            .toHex() + ".hex"
+                    ).writeText(
+                        update.write().toHex()
+                    )
+                }
+            }
+            ChannelMonitorUpdateStatus.LDKChannelMonitorUpdateStatus_Completed
+        } catch (e: Exception) {
+            ChannelMonitorUpdateStatus.LDKChannelMonitorUpdateStatus_PermanentFailure
+
+        }
+
     }
 }
 
@@ -265,7 +293,7 @@ object ChannelManagerEventHandler : ChannelManagerConstructor.EventHandler {
 
     override fun persist_network_graph(network_graph: ByteArray?) {
         println("persist_network_graph");
-        if(Global.prefixNetworkGraph != "" && network_graph !== null) {
+        if (Global.prefixNetworkGraph != "" && network_graph !== null) {
             val hex = network_graph.toHex()
             println("persist_network_graph_bytes: $hex");
             File(Global.homeDir + "/" + Global.prefixNetworkGraph).writeText(network_graph.toHex())
@@ -274,7 +302,7 @@ object ChannelManagerEventHandler : ChannelManagerConstructor.EventHandler {
 
     override fun persist_scorer(scorer: ByteArray?) {
         println("scorer");
-        if(Global.prefixScorer != "" && scorer !== null) {
+        if (Global.prefixScorer != "" && scorer !== null) {
             val hex = scorer.toHex()
             println("scorer_bytes: $hex");
             File(Global.homeDir + "/" + Global.prefixScorer).writeText(scorer.toHex())

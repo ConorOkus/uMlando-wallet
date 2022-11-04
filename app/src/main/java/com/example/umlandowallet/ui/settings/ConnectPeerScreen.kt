@@ -20,6 +20,9 @@ fun ConnectPeerScreen() {
     var pubKey by remember {
         mutableStateOf("")
     }
+    var port by remember {
+        mutableStateOf("")
+    }
     val (connectPeerStatus, setConnectPeerStatus) = remember { mutableStateOf("") }
 
     Column(
@@ -41,7 +44,17 @@ fun ConnectPeerScreen() {
             value = pubKey,
             onValueChange = { pubKey = it },
             placeholder = {
-                Text("Peer public node ID")
+                Text("Node ID")
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+        )
+        TextField(
+            value = port,
+            onValueChange = { port = it },
+            placeholder = {
+                Text("Port")
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -49,12 +62,12 @@ fun ConnectPeerScreen() {
         )
         Button(
             onClick = {
-                val pubKey = pubKey
+                // val pubKey = pubKey
                 val host = "10.0.2.2"
-                val port = 9500
+                // val port = port
 
                 GlobalScope.launch {
-                    val hasConnected = service.connectPeer(pubKey, host, port)
+                    val hasConnected = service.connectPeer(pubKey, host, port.toInt())
                     if(hasConnected) {
                         setConnectPeerStatus("Successfully connected to peer")
                     } else {

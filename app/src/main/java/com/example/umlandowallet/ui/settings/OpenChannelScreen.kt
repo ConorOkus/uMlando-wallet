@@ -1,4 +1,4 @@
-package com.example.umlandowallet.ui
+package com.example.umlandowallet.ui.settings
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
@@ -6,9 +6,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.umlandowallet.Global
 import com.example.umlandowallet.toByteArray
 import org.ldk.structs.ChannelHandshakeConfig
@@ -17,32 +19,49 @@ import org.ldk.structs.UserConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FundChannel() {
+fun OpenChannelScreen() {
     var pubKey by remember {
         mutableStateOf("")
     }
 
-    Button(onClick = {
-        createChannel(pubKey)
-    }) {
-        Text(text = "Fund Channel")
-    }
-    Spacer(modifier = Modifier.height(8.dp))
-    Column(verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+    Column(
+        // verticalArrangement = Arrangement.Center,
         modifier = Modifier
-            .padding(vertical = 8.dp))
+            .fillMaxSize()
+            .padding(top = 48.dp)
+    )
     {
+        Text(
+            text = "Open a channel",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xff1f0208),
+            modifier = Modifier
+                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
+        )
         TextField(
             value = pubKey,
             onValueChange = { pubKey = it },
-            modifier = Modifier.fillMaxWidth()
+            placeholder = {
+                Text("Peer public node ID")
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
         )
+        Button(
+            onClick = {
+                createChannel(pubKey)
+            },
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+        ) {
+            Text(text = "Connect")
+        }
     }
 }
 
 fun createChannel(pubKey: String) {
-    Global.temporaryChannelId = null;
+    Global.temporaryChannelId = null
 
     val amount = 100_000L
     val pushMsat = 1_000L
@@ -52,7 +71,8 @@ fun createChannel(pubKey: String) {
     val userConfig = UserConfig.with_default()
 
     val channelHandshakeConfig = ChannelHandshakeConfig.with_default()
-    channelHandshakeConfig._announced_channel = true
+    // set the following to true to open a public channel
+    channelHandshakeConfig._announced_channel = false
 
     userConfig._channel_handshake_config = channelHandshakeConfig
 
@@ -61,10 +81,10 @@ fun createChannel(pubKey: String) {
     )
 
     if (createChannelResult !is Result__u832APIErrorZ.Result__u832APIErrorZ_OK) {
-        println("ERROR: failed to open channel with: $pubKey");
+        println("ERROR: failed to open channel with: $pubKey")
     }
 
     if(createChannelResult.is_ok) {
-        println("EVENT: initiated channel with peer: $pubKey");
+        println("EVENT: initiated channel with peer: $pubKey")
     }
 }
