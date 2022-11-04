@@ -1,7 +1,10 @@
 package com.example.umlandowallet.ui
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -15,12 +18,15 @@ import com.example.umlandowallet.Global
 import com.example.umlandowallet.R
 import org.bitcoindevkit.AddressIndex
 
+private const val TAG = "SettingsScreen"
+
 @Composable
 fun SettingsScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .padding(top = 48.dp)
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
     ) {
         // Title
         Text(
@@ -208,7 +214,8 @@ fun SettingsScreen(navController: NavController) {
         }
         Button(
             onClick = {
-                println("New bitcoin address: ${Global.wallet!!.getAddress(AddressIndex.NEW).address}")
+                // println("New bitcoin address: ${Global.wallet!!.getAddress(AddressIndex.NEW).address}")
+                Log.i(TAG, "New bitcoin address: ${Global.wallet!!.getAddress(AddressIndex.NEW).address}")
             },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xfff0f0f0)),
             shape = RoundedCornerShape(8.dp),
@@ -231,7 +238,8 @@ fun SettingsScreen(navController: NavController) {
         }
         Button(
             onClick = {
-                println("On chain balance: ${Global.wallet!!.getBalance()}")
+                // println("On chain balance: ${Global.wallet!!.getBalance()}")
+                Log.i(TAG, "On chain balance: ${Global.wallet!!.getBalance()}")
             },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xfff0f0f0)),
             shape = RoundedCornerShape(8.dp),
@@ -240,7 +248,7 @@ fun SettingsScreen(navController: NavController) {
                 .padding(start = 24.dp, end = 24.dp, top = 24.dp)
         ) {
             Text(
-                text = "Get new address",
+                text = "Get balance",
                 fontWeight = FontWeight.Normal,
                 color = Color(0xff2f2f2f)
 

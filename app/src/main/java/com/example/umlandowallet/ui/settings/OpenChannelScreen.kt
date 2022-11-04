@@ -60,7 +60,6 @@ fun OpenChannelScreen() {
     }
 }
 
-
 fun createChannel(pubKey: String) {
     Global.temporaryChannelId = null;
 
