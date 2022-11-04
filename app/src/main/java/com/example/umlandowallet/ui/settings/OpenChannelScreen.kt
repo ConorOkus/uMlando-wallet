@@ -1,4 +1,4 @@
-package com.example.umlandowallet.ui
+package com.example.umlandowallet.ui.settings
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
@@ -61,7 +61,7 @@ fun OpenChannelScreen() {
 }
 
 fun createChannel(pubKey: String) {
-    Global.temporaryChannelId = null;
+    Global.temporaryChannelId = null
 
     val amount = 100_000L
     val pushMsat = 1_000L
@@ -71,6 +71,7 @@ fun createChannel(pubKey: String) {
     val userConfig = UserConfig.with_default()
 
     val channelHandshakeConfig = ChannelHandshakeConfig.with_default()
+    // set the following to true to open a public channel
     channelHandshakeConfig._announced_channel = false
 
     userConfig._channel_handshake_config = channelHandshakeConfig
@@ -80,10 +81,10 @@ fun createChannel(pubKey: String) {
     )
 
     if (createChannelResult !is Result__u832APIErrorZ.Result__u832APIErrorZ_OK) {
-        println("ERROR: failed to open channel with: $pubKey");
+        println("ERROR: failed to open channel with: $pubKey")
     }
 
     if(createChannelResult.is_ok) {
-        println("EVENT: initiated channel with peer: $pubKey");
+        println("EVENT: initiated channel with peer: $pubKey")
     }
 }

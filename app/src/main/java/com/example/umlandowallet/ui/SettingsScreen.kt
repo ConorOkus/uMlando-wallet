@@ -37,7 +37,6 @@ fun SettingsScreen(navController: NavController) {
             modifier = Modifier
                 .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
         )
-
         Text(
             text = "Lightning Node",
             fontSize = 18.sp,
@@ -53,7 +52,9 @@ fun SettingsScreen(navController: NavController) {
                 .padding(start = 24.dp, end = 24.dp)
         )
 
-        Button(
+        // Node ID
+        SettingButton(
+            label = "Node ID",
             onClick = {
                 navController.navigate(Screen.NodeIdScreen.route) {
                     navController.graph.startDestinationRoute?.let { route ->
@@ -61,28 +62,12 @@ fun SettingsScreen(navController: NavController) {
                     }
                     launchSingleTop = true
                 }
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xfff0f0f0)),
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier
-                .size(width = 400.dp, height = 70.dp)
-                .padding(start = 24.dp, end = 24.dp, top = 24.dp)
-        ) {
-            Text(
-                text = "Node ID",
-                fontWeight = FontWeight.Normal,
-                color = Color(0xff2f2f2f)
+            }
+        )
 
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Icon(
-                painter = painterResource(id = R.drawable.ic_hicon_right_arrow),
-                contentDescription = "Right arrow icon",
-                tint = Color(0xff000000)
-            )
-        }
-
-        Button(
+        // List peers
+        SettingButton(
+            label = "List peers",
             onClick = {
                 navController.navigate(Screen.ListPeersScreen.route) {
                     navController.graph.startDestinationRoute?.let { route ->
@@ -90,28 +75,12 @@ fun SettingsScreen(navController: NavController) {
                     }
                     launchSingleTop = true
                 }
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xfff0f0f0)),
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier
-                .size(width = 400.dp, height = 70.dp)
-                .padding(start = 24.dp, end = 24.dp, top = 24.dp)
-        ) {
-            Text(
-                text = "List peers",
-                fontWeight = FontWeight.Normal,
-                color = Color(0xff2f2f2f)
+            }
+        )
 
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Icon(
-                painter = painterResource(id = R.drawable.ic_hicon_right_arrow),
-                contentDescription = "Right arrow icon",
-                tint = Color(0xff000000)
-            )
-        }
-
-        Button(
+        // Connect to a peer
+        SettingButton(
+            label = "Connect to a peer",
             onClick = {
                 navController.navigate(Screen.ConnectPeerScreen.route) {
                     navController.graph.startDestinationRoute?.let { route ->
@@ -119,28 +88,12 @@ fun SettingsScreen(navController: NavController) {
                     }
                     launchSingleTop = true
                 }
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xfff0f0f0)),
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier
-                .size(width = 400.dp, height = 70.dp)
-                .padding(start = 24.dp, end = 24.dp, top = 24.dp)
-        ) {
-            Text(
-                text = "Connect to a peer",
-                fontWeight = FontWeight.Normal,
-                color = Color(0xff2f2f2f)
+            }
+        )
 
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Icon(
-                painter = painterResource(id = R.drawable.ic_hicon_right_arrow),
-                contentDescription = "Right arrow icon",
-                tint = Color(0xff000000)
-            )
-        }
-
-        Button(
+        // Open a channel
+        SettingButton(
+            label = "Open a channel",
             onClick = {
                 navController.navigate(Screen.OpenChannelScreen.route) {
                     navController.graph.startDestinationRoute?.let { route ->
@@ -148,27 +101,8 @@ fun SettingsScreen(navController: NavController) {
                     }
                     launchSingleTop = true
                 }
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xfff0f0f0)),
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier
-                .size(width = 400.dp, height = 70.dp)
-                .padding(start = 24.dp, end = 24.dp, top = 24.dp)
-        ) {
-            Text(
-                text = "Open a channel",
-                fontWeight = FontWeight.Normal,
-                color = Color(0xff2f2f2f)
-
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Icon(
-                painter = painterResource(id = R.drawable.ic_hicon_right_arrow),
-                contentDescription = "Right arrow icon",
-                tint = Color(0xff000000)
-            )
-        }
-
+            }
+        )
         Text(
             text = "Onchain Wallet",
             fontSize = 18.sp,
@@ -184,7 +118,9 @@ fun SettingsScreen(navController: NavController) {
                 .padding(start = 24.dp, end = 24.dp)
         )
 
-        Button(
+        // Recovery phrase
+        SettingButton(
+            label = "Recovery phrase",
             onClick = {
                 navController.navigate(Screen.RecoveryPhraseScreen.route) {
                     navController.graph.startDestinationRoute?.let { route ->
@@ -192,73 +128,44 @@ fun SettingsScreen(navController: NavController) {
                     }
                     launchSingleTop = true
                 }
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xfff0f0f0)),
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier
-                .size(width = 400.dp, height = 70.dp)
-                .padding(start = 24.dp, end = 24.dp, top = 24.dp)
-        ) {
-            Text(
-                text = "Recovery phrase",
-                fontWeight = FontWeight.Normal,
-                color = Color(0xff2f2f2f)
+            }
+        )
 
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Icon(
-                painter = painterResource(id = R.drawable.ic_hicon_right_arrow),
-                contentDescription = "Right arrow icon",
-                tint = Color(0xff000000)
-            )
-        }
-        Button(
-            onClick = {
-                // println("New bitcoin address: ${Global.wallet!!.getAddress(AddressIndex.NEW).address}")
-                Log.i(TAG, "New bitcoin address: ${Global.wallet!!.getAddress(AddressIndex.NEW).address}")
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xfff0f0f0)),
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier
-                .size(width = 400.dp, height = 70.dp)
-                .padding(start = 24.dp, end = 24.dp, top = 24.dp)
-        ) {
-            Text(
-                text = "Get new address",
-                fontWeight = FontWeight.Normal,
-                color = Color(0xff2f2f2f)
+        // Get new address
+        SettingButton(
+            label = "Get new address",
+            onClick = { Log.i(TAG, "New bitcoin address: ${Global.wallet!!.getAddress(AddressIndex.NEW).address}") }
+        )
 
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Icon(
-                painter = painterResource(id = R.drawable.ic_hicon_right_arrow),
-                contentDescription = "Right arrow icon",
-                tint = Color(0xff000000)
-            )
-        }
-        Button(
-            onClick = {
-                // println("On chain balance: ${Global.wallet!!.getBalance()}")
-                Log.i(TAG, "On chain balance: ${Global.wallet!!.getBalance()}")
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xfff0f0f0)),
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier
-                .size(width = 400.dp, height = 70.dp)
-                .padding(start = 24.dp, end = 24.dp, top = 24.dp)
-        ) {
-            Text(
-                text = "Get balance",
-                fontWeight = FontWeight.Normal,
-                color = Color(0xff2f2f2f)
+        // Get balance
+        SettingButton(
+            label = "Get balance",
+            onClick = { Log.i(TAG, "On chain balance: ${Global.wallet!!.getBalance()}") }
+        )
+    }
+}
 
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Icon(
-                painter = painterResource(id = R.drawable.ic_hicon_right_arrow),
-                contentDescription = "Right arrow icon",
-                tint = Color(0xff000000)
-            )
-        }
+@Composable
+internal fun SettingButton(label: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xfff0f0f0)),
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier
+            .size(width = 400.dp, height = 70.dp)
+            .padding(start = 24.dp, end = 24.dp, top = 24.dp)
+    ) {
+        Text(
+            text = label,
+            fontWeight = FontWeight.Normal,
+            color = Color(0xff2f2f2f)
+
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Icon(
+            painter = painterResource(id = R.drawable.ic_hicon_right_arrow),
+            contentDescription = "Right arrow icon",
+            tint = Color(0xff000000)
+        )
     }
 }
