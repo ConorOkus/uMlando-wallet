@@ -31,7 +31,6 @@ _Note: i686 builds are not included in aars in order to preserve space - there a
 * [x] List peers
 * [x] Get Node ID
 * [x] Open Channel
-* [x] Open Channel
 * [ ] Send payment
 * [ ] Receive payment 
 * [ ] Close channel
