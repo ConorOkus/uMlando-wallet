@@ -41,37 +41,3 @@ fun ListPeersScreen() {
     }
 }
 
-
-
-// fun ListPeers() {
-//     val _peerList = remember { MutableStateFlow(listOf<String>()) }
-//     val peerList by remember { _peerList }.collectAsState()
-//     Button(
-//         onClick = {
-//             val peers = Global.peerManager!!.get_peer_node_ids()
-//             val newList = ArrayList(peerList)
-//
-//             println("List peers: $peers")
-//
-//             peers.iterator().forEach {
-//                 newList.add(it.toHex())
-//             }
-//
-//             _peerList.value = newList
-//         },
-//     ) {
-//         Text(text = "List Peers")
-//     }
-//     Spacer(modifier = Modifier.height(8.dp))
-//     LazyColumn(Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-//         if(peerList.isNotEmpty()) {
-//             items(peerList) { peer ->
-//                 Text(text = peer)
-//                 Spacer(modifier = Modifier.height(8.dp))
-//                 Divider()
-//                 Spacer(modifier = Modifier.height(8.dp))
-//             }
-//         }
-//     }
-// }
-

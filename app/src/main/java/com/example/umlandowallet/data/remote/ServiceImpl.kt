@@ -3,7 +3,6 @@ package com.example.umlandowallet.data.remote
 import com.example.umlandowallet.Global
 import com.example.umlandowallet.data.MerkleProof
 import com.example.umlandowallet.data.Tx
-import com.example.umlandowallet.data.TxResponse
 import com.example.umlandowallet.data.TxStatus
 import com.example.umlandowallet.toByteArray
 import com.example.umlandowallet.toHex
@@ -16,12 +15,12 @@ import java.net.InetSocketAddress
 
 
 class ServiceImpl(private val client: HttpClient) : Service {
-    override suspend fun getlatestBlockHash(): String {
+    override suspend fun getLatestBlockHash(): String {
         val httpResponse: HttpResponse = client.get("http://10.0.2.2:3002/blocks/tip/hash")
         return httpResponse.body()
     }
 
-    override suspend fun getlatestBlockHeight(): Int {
+    override suspend fun getLatestBlockHeight(): Int {
         val httpResponse: HttpResponse = client.get("http://10.0.2.2:3002/blocks/tip/height")
         return httpResponse.body<Int>().toInt()
     }

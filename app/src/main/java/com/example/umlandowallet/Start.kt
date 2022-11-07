@@ -10,7 +10,6 @@ import org.ldk.structs.*
 import org.ldk.structs.FeeEstimator.FeeEstimatorInterface
 import org.ldk.structs.Logger.LoggerInterface
 import java.io.File
-import java.io.IOException
 import java.net.InetSocketAddress
 
 fun start(
@@ -64,7 +63,7 @@ fun start(
     var channelMonitors = arrayOf<ByteArray>()
     if (serializedChannelMonitors != "") {
         println("LDK: initiating channel monitors...")
-        val channelMonitorHexes = serializedChannelMonitors.split(",").toTypedArray();
+        val channelMonitorHexes = serializedChannelMonitors.split(",").toTypedArray()
         val channelMonitorList = ArrayList<ByteArray>()
         channelMonitorHexes.iterator().forEach {
             val channelMonitorBytes = it.toByteArray()
@@ -114,13 +113,13 @@ fun start(
                 Global.router!!.write(),
                 txBroadcaster,
                 logger
-            );
+            )
 
             Global.channelManager = Global.channelManagerConstructor!!.channel_manager
             Global.channelManagerConstructor!!.chain_sync_completed(
                 ChannelManagerEventHandler,
                 scorer
-            );
+            )
             Global.peerManager = Global.channelManagerConstructor!!.peer_manager
             Global.nioPeerHandler = Global.channelManagerConstructor!!.nio_peer_handler
             Global.router = Global.channelManagerConstructor!!.net_graph
@@ -137,15 +136,15 @@ fun start(
                 Global.router,
                 txBroadcaster,
                 logger
-            );
-            Global.channelManager = Global.channelManagerConstructor!!.channel_manager;
+            )
+            Global.channelManager = Global.channelManagerConstructor!!.channel_manager
             Global.channelManagerConstructor!!.chain_sync_completed(
                 ChannelManagerEventHandler,
                 scorer
-            );
-            Global.peerManager = Global.channelManagerConstructor!!.peer_manager;
-            Global.nioPeerHandler = Global.channelManagerConstructor!!.nio_peer_handler;
-            Global.router = Global.channelManagerConstructor!!.net_graph;
+            )
+            Global.peerManager = Global.channelManagerConstructor!!.peer_manager
+            Global.nioPeerHandler = Global.channelManagerConstructor!!.nio_peer_handler
+            Global.router = Global.channelManagerConstructor!!.net_graph
         }
 
         // If you want to communicate from your computer to your emulator,
@@ -154,7 +153,7 @@ fun start(
         // If you want to do the reverse use 10.0.2.2 instead of localhost
         Global.nioPeerHandler!!.bind_listener(InetSocketAddress("127.0.0.1", 9777))
     } catch (e: Exception) {
-        println("LDK: can't start, " + e.message);
+        println("LDK: can't start, " + e.message)
     }
 }
 
@@ -190,13 +189,13 @@ object LDKBroadcaster : BroadcasterInterface.BroadcasterInterfaceInterface {
 }
 
 fun initializeNetworkGraph(genesisBlockHash: ByteArray, logger: Logger) {
-    val f = File(Global.homeDir + "/" + Global.prefixNetworkGraph);
+    val f = File(Global.homeDir + "/" + Global.prefixNetworkGraph)
 
     if (f.exists()) {
         println("loading network graph from: ${Global.homeDir + "/" + Global.prefixNetworkGraph}")
         val serializedGraph = File(Global.homeDir + "/" + Global.prefixNetworkGraph).readBytes()
         val readResult = NetworkGraph.read(serializedGraph, logger)
-        println("readResult: ${readResult}")
+        println("readResult: $readResult")
 
         if (readResult is Result_NetworkGraphDecodeErrorZ.Result_NetworkGraphDecodeErrorZ_OK) {
             Global.router = readResult.res
@@ -205,7 +204,7 @@ fun initializeNetworkGraph(genesisBlockHash: ByteArray, logger: Logger) {
         } else {
             println("network graph load failed")
             if (readResult is Result_NetworkGraphDecodeErrorZ.Result_NetworkGraphDecodeErrorZ_Err) {
-                println(readResult.err);
+                println(readResult.err)
             }
 
             // error, creating from scratch
@@ -279,32 +278,32 @@ object LDKPersister : Persist.PersistInterface {
 object ChannelManagerEventHandler : ChannelManagerConstructor.EventHandler {
     override fun handle_event(event: Event) {
         println("Getting ready to handle event")
-        handleEvent(event);
+        handleEvent(event)
     }
 
     override fun persist_manager(channel_manager_bytes: ByteArray?) {
-        println("persist_manager");
+        println("persist_manager")
         if (channel_manager_bytes != null) {
             val hex = channel_manager_bytes.toHex()
             println("channel_manager_bytes: $hex")
-            File(Global.homeDir + "/" + Global.prefixChannelManager).writeText(channel_manager_bytes.toHex());
+            File(Global.homeDir + "/" + Global.prefixChannelManager).writeText(channel_manager_bytes.toHex())
         }
     }
 
     override fun persist_network_graph(network_graph: ByteArray?) {
-        println("persist_network_graph");
+        println("persist_network_graph")
         if (Global.prefixNetworkGraph != "" && network_graph !== null) {
             val hex = network_graph.toHex()
-            println("persist_network_graph_bytes: $hex");
+            println("persist_network_graph_bytes: $hex")
             File(Global.homeDir + "/" + Global.prefixNetworkGraph).writeText(network_graph.toHex())
         }
     }
 
     override fun persist_scorer(scorer: ByteArray?) {
-        println("scorer");
+        println("scorer")
         if (Global.prefixScorer != "" && scorer !== null) {
             val hex = scorer.toHex()
-            println("scorer_bytes: $hex");
+            println("scorer_bytes: $hex")
             File(Global.homeDir + "/" + Global.prefixScorer).writeText(scorer.toHex())
         }
     }
@@ -314,7 +313,7 @@ object ChannelManagerEventHandler : ChannelManagerConstructor.EventHandler {
 // useful if you pre-filter blocks or use compact filters. Otherwise, LDK will need full blocks.
 object LDKTxFilter : Filter.FilterInterface {
     override fun register_tx(txid: ByteArray, script_pubkey: ByteArray) {
-        println("register_tx");
+        println("register_tx")
         val params = WritableMap()
         params.putString("txid", txid.reversedArray().toHex())
         params.putString("script_pubkey", script_pubkey.toHex())
@@ -323,9 +322,9 @@ object LDKTxFilter : Filter.FilterInterface {
     }
 
     override fun register_output(output: WatchedOutput) {
-        println("register_output");
+        println("register_output")
         val params = WritableMap()
-        val blockHash = output._block_hash;
+        val blockHash = output._block_hash
         if (blockHash is ByteArray) {
             params.putString("block_hash", blockHash.toHex())
         }

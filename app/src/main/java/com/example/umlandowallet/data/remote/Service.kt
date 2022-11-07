@@ -13,9 +13,9 @@ import kotlinx.serialization.json.Json
 
 interface Service {
 
-    suspend fun getlatestBlockHash() : String
+    suspend fun getLatestBlockHash() : String
 
-    suspend fun getlatestBlockHeight() : Int
+    suspend fun getLatestBlockHeight() : Int
 
     suspend fun broadcastTx(tx: ByteArray) : String
 
