@@ -52,15 +52,15 @@ class AccessImpl(
             val txId = txid.reversedArray().toHex()
             val txStatus: TxStatus = service.getTxStatus(txId)
             if (txStatus.confirmed) {
-                val hexTx = service.getHexTx(txId)
-                val (txByteArray, txJson) = service.getTx(txId)
-                if (txJson.status.block_height != null) {
-                    val blockHeader = service.getHeader(txJson.status.block_hash)
+                val txHex = service.getTxHex(txId)
+                val tx = service.getTx(txId)
+                if (tx.status.block_height != null) {
+                    val blockHeader = service.getHeader(tx.status.block_hash)
                     val merkleProof = service.getMerkleProof(txId)
-                    if (txJson.status.block_height == merkleProof.block_height) {
+                    if (tx.status.block_height == merkleProof.block_height) {
                         confirmedTxs.add(ConfirmedTx(
-                                tx = hexTx.toByteArray(),
-                                block_height = txJson.status.block_height,
+                                tx = txHex.toByteArray(),
+                                block_height = tx.status.block_height,
                                 block_header = blockHeader,
                                 merkle_proof_pos = merkleProof.pos
                             )

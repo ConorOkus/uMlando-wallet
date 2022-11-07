@@ -19,9 +19,9 @@ interface Service {
 
     suspend fun broadcastTx(tx: ByteArray) : String
 
-    suspend fun getHexTx(txid: String): String
+    suspend fun getTx(txid: String) : Tx
 
-    suspend fun getTx(txid: String) : TxResponse
+    suspend fun getTxHex(txid: String): String
 
     suspend fun getTxStatus(txid: String) : TxStatus
 
