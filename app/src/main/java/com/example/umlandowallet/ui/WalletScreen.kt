@@ -12,16 +12,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.umlandowallet.ChannelManagerEventHandler
 import com.example.umlandowallet.Global
-import com.example.umlandowallet.createBlockchain
+import com.example.umlandowallet.data.OnchainWallet
 import com.example.umlandowallet.data.remote.Access
-import com.example.umlandowallet.toHex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.bitcoindevkit.PartiallySignedBitcoinTransaction
-import org.bitcoindevkit.Progress
-import org.bitcoindevkit.Script
-import org.bitcoindevkit.TxBuilder
 
 private const val TAG = "WalletScreen"
 
@@ -62,7 +57,7 @@ fun WalletScreen() {
                     val access = Access.create()
 
                     // Sync BDK wallet
-                    access.syncWallet(Global.wallet!!, LogProgress)
+                    access.syncWallet(OnchainWallet)
 
                     // Sync LDK/Lightning
                     access.syncTransactionsUnconfirmed(relevantTxIds, Global.channelManager!!, Global.chainMonitor!!)
@@ -70,7 +65,7 @@ fun WalletScreen() {
                     access.syncBestBlockConnected(Global.channelManager!!, Global.chainMonitor!!)
 
                     Global.channelManagerConstructor!!.chain_sync_completed(
-                        ChannelManagerEventHandler, Global.scorer!!);
+                        ChannelManagerEventHandler, Global.scorer!!)
                 }
 
                 Log.i(TAG, "Wallet synced")
@@ -82,36 +77,5 @@ fun WalletScreen() {
                 text = "Sync",
             )
         }
-    }
-}
-
-fun buildFundingTx(value: Long, script: ByteArray): ByteArray {
-    val blockchain = createBlockchain()
-    Global.wallet!!.sync(blockchain, LogProgress)
-    val scriptListUByte: List<UByte> = script.toUByteArray().asList()
-    val outputScript: Script = Script(scriptListUByte)
-    val (psbt, txDetails) = TxBuilder()
-        .addRecipient(outputScript, value.toULong())
-        .feeRate(4.0F)
-        .finish(Global.wallet!!)
-    Global.wallet!!.sign(psbt)
-    val rawTx = psbt.extractTx().toUByteArray().toByteArray()
-    println("The raw funding tx is ${rawTx.toHex()}")
-    return rawTx
-}
-
-fun sign(psbt: PartiallySignedBitcoinTransaction) {
-    Global.wallet!!.sign(psbt)
-}
-
-fun broadcast(signedPsbt: PartiallySignedBitcoinTransaction): String {
-    val blockchain = createBlockchain()
-    blockchain.broadcast(signedPsbt)
-    return signedPsbt.txid()
-}
-
-object LogProgress: Progress {
-    override fun update(progress: Float, message: String?) {
-        Log.d(TAG, "updating wallet $progress $message")
     }
 }
