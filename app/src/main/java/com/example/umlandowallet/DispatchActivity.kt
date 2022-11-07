@@ -76,9 +76,11 @@ class DispatchActivity : AppCompatActivity() {
             databaseConfig,
         )
 
-        Log.i(TAG, "Successfully created/restored wallet with mnemonic $mnemonic")
+        Log.i(TAG, "Successfully created/restored wallet with mnemonic $mnemonic + $ldkEntropy")
 
-        start(ldkEntropy.toHex(), latestBlockHeight.toInt(), latestBlockHash, serializedChannelManager, serializedChannelMonitors)
+        start(ldkEntropy, latestBlockHeight.toInt(), latestBlockHash, serializedChannelManager, serializedChannelMonitors)
+
+
 
         startActivity(Intent(this, MainActivity::class.java))
     }

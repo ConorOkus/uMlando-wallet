@@ -73,7 +73,6 @@ fun createChannel(pubKey: String) {
     val channelHandshakeConfig = ChannelHandshakeConfig.with_default()
     // set the following to true to open a public channel
     channelHandshakeConfig._announced_channel = false
-
     userConfig._channel_handshake_config = channelHandshakeConfig
 
     val createChannelResult = Global.channelManager!!.create_channel(
