@@ -5,9 +5,8 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.example.umlandowallet.data.OnchainWallet
+import com.example.umlandowallet.utils.LDKTAG
 import java.io.File
-
-private const val TAG = "DispatchActivity"
 
 class DispatchActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,7 +23,7 @@ class DispatchActivity : AppCompatActivity() {
         val ldkDataDirectory = File(Global.homeDir)
         if(!ldkDataDirectory.exists()) {
             ldkDataDirectory.mkdir()
-            Log.i(TAG, "Creating directory at $ldkDataDirectory")
+            Log.i(LDKTAG, "Creating directory at $ldkDataDirectory")
         }
 
         val latestBlockHeight = OnchainWallet.getHeight()
@@ -53,10 +52,6 @@ class DispatchActivity : AppCompatActivity() {
             serializedChannelManager,
             serializedChannelMonitors
         )
-
-        Log.i(TAG, "Successfully created/restored wallet with mnemonic $mnemonic")
-
-        start(ldkEntropy, latestBlockHeight.toInt(), latestBlockHash, serializedChannelManager, serializedChannelMonitors)
 
         startActivity(Intent(this, MainActivity::class.java))
     }

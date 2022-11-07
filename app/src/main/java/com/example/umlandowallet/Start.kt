@@ -1,6 +1,8 @@
 package com.example.umlandowallet
 
+import android.util.Log
 import com.example.umlandowallet.data.remote.Service
+import com.example.umlandowallet.utils.LDKTAG
 import kotlinx.coroutines.*
 import org.ldk.batteries.ChannelManagerConstructor
 import org.ldk.enums.ChannelMonitorUpdateStatus
@@ -19,9 +21,8 @@ fun start(
     serializedChannelManager: String,
     serializedChannelMonitors: String
 ) {
-    println("LDK starting...")
-
-    println(org.ldk.impl.version.get_ldk_java_bindings_version())
+    Log.i(LDKTAG, "LDK starting...")
+    Log.i(LDKTAG, "This wallet is using the LDK Java bindings version ${org.ldk.impl.version.get_ldk_java_bindings_version()}")
 
     // Estimating fees for on-chain transactions that LDK wants to broadcast.
     val feeEstimator: FeeEstimator = FeeEstimator.new_impl(LDKFeeEstimator)
@@ -62,7 +63,7 @@ fun start(
     // This hashmap will later be given to the `ChannelManager` on initialization.
     var channelMonitors = arrayOf<ByteArray>()
     if (serializedChannelMonitors != "") {
-        println("LDK: initiating channel monitors...")
+        Log.i(LDKTAG, "LDK: initiating channel monitors...")
         val channelMonitorHexes = serializedChannelMonitors.split(",").toTypedArray()
         val channelMonitorList = ArrayList<ByteArray>()
         channelMonitorHexes.iterator().forEach {
@@ -153,7 +154,7 @@ fun start(
         // If you want to do the reverse use 10.0.2.2 instead of localhost
         Global.nioPeerHandler!!.bind_listener(InetSocketAddress("127.0.0.1", 9777))
     } catch (e: Exception) {
-        println("LDK: can't start, " + e.message)
+        Log.i(LDKTAG, "LDK: can't start, ${e.message}")
     }
 }
 
@@ -182,7 +183,7 @@ object LDKBroadcaster : BroadcasterInterface.BroadcasterInterfaceInterface {
         tx?.let {
             GlobalScope.launch {
                 val txid = service.broadcastTx(tx)
-                println("We've broadcast a transaction with txid $txid")
+                Log.i(LDKTAG, "We've broadcast a transaction with txid $txid")
             }
         } ?: throw(IllegalStateException("Broadcaster attempted to broadcast a null transaction"))
     }
@@ -192,34 +193,32 @@ fun initializeNetworkGraph(genesisBlockHash: ByteArray, logger: Logger) {
     val f = File(Global.homeDir + "/" + Global.prefixNetworkGraph)
 
     if (f.exists()) {
-        println("loading network graph from: ${Global.homeDir + "/" + Global.prefixNetworkGraph}")
+        Log.i(LDKTAG, "Loading network graph from: ${Global.homeDir + "/" + Global.prefixNetworkGraph}")
         val serializedGraph = File(Global.homeDir + "/" + Global.prefixNetworkGraph).readBytes()
         val readResult = NetworkGraph.read(serializedGraph, logger)
-        println("readResult: $readResult")
+        Log.i(LDKTAG, "ReadResult: $readResult")
 
         if (readResult is Result_NetworkGraphDecodeErrorZ.Result_NetworkGraphDecodeErrorZ_OK) {
             Global.router = readResult.res
             Global.p2pGossipSync = P2PGossipSync.of(readResult.res, Option_AccessZ.none(), logger)
-            println("loaded network graph ok")
+            Log.i(LDKTAG, "Loaded network graph ok")
         } else {
-            println("network graph load failed")
+            Log.i(LDKTAG,"Network graph load failed")
             if (readResult is Result_NetworkGraphDecodeErrorZ.Result_NetworkGraphDecodeErrorZ_Err) {
-                println(readResult.err)
+                Log.i(LDKTAG, "${readResult.err}")
             }
 
             // error, creating from scratch
-            Global.router =
-                NetworkGraph.of(genesisBlockHash.reversedArray(), logger)
+            Global.router = NetworkGraph.of(genesisBlockHash.reversedArray(), logger)
         }
     } else {
         // first run, creating from scratch
-        Global.router =
-            NetworkGraph.of(genesisBlockHash.reversedArray(), logger)
+        Global.router = NetworkGraph.of(genesisBlockHash.reversedArray(), logger)
     }
 }
 
 
-// To create a Perisister for our Channel Monitors we need to provide an object that implements the PersistInterface
+// To create a Persister for our Channel Monitors we need to provide an object that implements the PersistInterface
 // which has 2 functions persist_new_channel & update_persisted_channel
 object LDKPersister : Persist.PersistInterface {
     override fun persist_new_channel(
@@ -228,7 +227,7 @@ object LDKPersister : Persist.PersistInterface {
         updateId: MonitorUpdateId?
     ): ChannelMonitorUpdateStatus? {
         return try {
-            println("persist_new_channel")
+            Log.i(LDKTAG, "persist_new_channel")
             if (data != null) {
                 if (id != null) {
                     File(
@@ -253,7 +252,7 @@ object LDKPersister : Persist.PersistInterface {
         data: ChannelMonitor?,
         updateId: MonitorUpdateId
     ): ChannelMonitorUpdateStatus? {
-        println("update_persisted_channel")
+        Log.i(LDKTAG, "update_persisted_channel")
         return try {
             if (id != null) {
                 if (update != null) {
@@ -277,33 +276,33 @@ object LDKPersister : Persist.PersistInterface {
 // Responsible for backing up channel_manager bytes
 object ChannelManagerEventHandler : ChannelManagerConstructor.EventHandler {
     override fun handle_event(event: Event) {
-        println("Getting ready to handle event")
+        Log.i(LDKTAG, "Getting ready to handle event")
         handleEvent(event)
     }
 
     override fun persist_manager(channel_manager_bytes: ByteArray?) {
-        println("persist_manager")
+        Log.i(LDKTAG, "persist_manager")
         if (channel_manager_bytes != null) {
             val hex = channel_manager_bytes.toHex()
-            println("channel_manager_bytes: $hex")
+            Log.i(LDKTAG, "channel_manager_bytes: $hex")
             File(Global.homeDir + "/" + Global.prefixChannelManager).writeText(channel_manager_bytes.toHex())
         }
     }
 
     override fun persist_network_graph(network_graph: ByteArray?) {
-        println("persist_network_graph")
+        Log.i(LDKTAG, "persist_network_graph")
         if (Global.prefixNetworkGraph != "" && network_graph !== null) {
             val hex = network_graph.toHex()
-            println("persist_network_graph_bytes: $hex")
+            Log.i(LDKTAG, "persist_network_graph_bytes: $hex")
             File(Global.homeDir + "/" + Global.prefixNetworkGraph).writeText(network_graph.toHex())
         }
     }
 
     override fun persist_scorer(scorer: ByteArray?) {
-        println("scorer")
+        Log.i(LDKTAG, "scorer")
         if (Global.prefixScorer != "" && scorer !== null) {
             val hex = scorer.toHex()
-            println("scorer_bytes: $hex")
+            Log.i(LDKTAG, "scorer_bytes: $hex")
             File(Global.homeDir + "/" + Global.prefixScorer).writeText(scorer.toHex())
         }
     }
@@ -313,7 +312,7 @@ object ChannelManagerEventHandler : ChannelManagerConstructor.EventHandler {
 // useful if you pre-filter blocks or use compact filters. Otherwise, LDK will need full blocks.
 object LDKTxFilter : Filter.FilterInterface {
     override fun register_tx(txid: ByteArray, script_pubkey: ByteArray) {
-        println("register_tx")
+        Log.i(LDKTAG, "register_tx")
         val params = WritableMap()
         params.putString("txid", txid.reversedArray().toHex())
         params.putString("script_pubkey", script_pubkey.toHex())
@@ -322,7 +321,7 @@ object LDKTxFilter : Filter.FilterInterface {
     }
 
     override fun register_output(output: WatchedOutput) {
-        println("register_output")
+        Log.i(LDKTAG, "register_output")
         val params = WritableMap()
         val blockHash = output._block_hash
         if (blockHash is ByteArray) {

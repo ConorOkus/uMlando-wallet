@@ -16,8 +16,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.umlandowallet.R
 import com.example.umlandowallet.data.OnchainWallet
-
-private const val TAG = "SettingsScreen"
+import com.example.umlandowallet.utils.LDKTAG
 
 @Composable
 fun SettingsScreen(navController: NavController) {
@@ -133,14 +132,13 @@ fun SettingsScreen(navController: NavController) {
         // Get new address
         SettingButton(
             label = "Get new address",
-            onClick = { Log.i(TAG, "New bitcoin address: ${OnchainWallet.getNewAddress()}") }
-            // onClick = { Log.i(TAG, "New bitcoin address: ${Global.wallet!!.getAddress(AddressIndex.NEW).address}") }
+            onClick = { Log.i(LDKTAG, "New bitcoin address: ${OnchainWallet.getNewAddress()}") }
         )
 
         // Get balance
         SettingButton(
             label = "Get balance",
-            onClick = { Log.i(TAG, "On chain balance: ${OnchainWallet.getBalance()}") }
+            onClick = { Log.i(LDKTAG, "On chain balance: ${OnchainWallet.getBalance()}") }
         )
     }
 }

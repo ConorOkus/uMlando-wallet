@@ -3,10 +3,9 @@ package com.example.umlandowallet.data
 import android.util.Log
 import com.example.umlandowallet.Global
 import com.example.umlandowallet.toHex
+import com.example.umlandowallet.utils.LDKTAG
 import org.bitcoindevkit.*
 import java.io.File
-
-private const val TAG = "OnchainWallet"
 
 // The onchain wallet is currently always in regtest mode
 object OnchainWallet {
@@ -31,7 +30,7 @@ object OnchainWallet {
             Network.REGTEST,
             databaseConfig,
         )
-        Log.i(TAG, "Successfully created/restored wallet with mnemonic $mnemonic")
+        Log.i(LDKTAG, "Successfully created/restored wallet with mnemonic $mnemonic")
     }
 
     fun getNewAddress(): String {
@@ -69,7 +68,7 @@ object OnchainWallet {
         val child: DescriptorSecretKey = bip32RootKey.derive(derivationPath)
         val entropy: ByteArray = child.secretBytes().toUByteArray().toByteArray()
 
-        Log.i(TAG, "Entropy used for LDK is ${entropy.toHex()}")
+        Log.i(LDKTAG, "Entropy used for LDK is ${entropy.toHex()}")
         return entropy
     }
 
@@ -84,7 +83,7 @@ object OnchainWallet {
             .finish(onchainWallet)
         sign(psbt)
         val rawTx = psbt.extractTx().toUByteArray().toByteArray()
-        println("The raw funding tx is ${rawTx.toHex()}")
+        Log.i(LDKTAG, "The raw funding tx is ${rawTx.toHex()}")
         return rawTx
     }
 
@@ -109,7 +108,7 @@ object OnchainWallet {
             return File(Global.homeDir + "/" + "mnemonic.txt").readText()
         } catch (e: Throwable) {
             // if mnemonic doesn't exist, generate one and save it
-            Log.i(TAG, "No mnemonic backup, we'll create a new wallet")
+            Log.i(LDKTAG, "No mnemonic backup, we'll create a new wallet")
             val mnemonic = generateMnemonic(WordCount.WORDS12)
             File(Global.homeDir + "/" + "mnemonic.txt").writeText(mnemonic)
             return mnemonic
@@ -122,7 +121,7 @@ object OnchainWallet {
 
     object LogProgress: Progress {
         override fun update(progress: Float, message: String?) {
-            Log.d(TAG, "updating wallet $progress $message")
+            Log.d(LDKTAG, "updating wallet $progress $message")
         }
     }
 }
