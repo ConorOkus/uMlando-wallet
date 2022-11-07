@@ -1,15 +1,14 @@
 package com.example.umlandowallet.data.remote
 
-import com.example.umlandowallet.Global
+import com.example.umlandowallet.data.OnchainWallet
 import org.bitcoindevkit.*
 import org.ldk.structs.ChainMonitor
 import org.ldk.structs.ChannelManager
-import java.io.File
 
 interface Access {
     suspend fun sync(): Unit
 
-    suspend fun syncWallet(wallet: Wallet, logProgress: Progress): Unit
+    suspend fun syncWallet(onchainWallet: OnchainWallet): Unit
 
     suspend fun syncBestBlockConnected(
         channelManager: ChannelManager,

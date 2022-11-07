@@ -8,8 +8,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.umlandowallet.Global
-import java.io.File
+import com.example.umlandowallet.data.OnchainWallet
 
 @Composable
 fun RecoveryPhraseScreen() {
@@ -27,9 +26,8 @@ fun RecoveryPhraseScreen() {
                 .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
         )
 
-        val nodeIdByteArray = Global.channelManager?._our_node_id
         Text(
-            text = File(Global.homeDir + "/" + "mnemonic").readText(),
+            text = OnchainWallet.recoveryPhrase(),
             modifier = Modifier.padding(start = 24.dp, end = 24.dp)
         )
     }

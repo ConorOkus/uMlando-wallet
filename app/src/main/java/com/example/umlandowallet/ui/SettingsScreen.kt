@@ -14,9 +14,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.umlandowallet.Global
 import com.example.umlandowallet.R
-import org.bitcoindevkit.AddressIndex
+import com.example.umlandowallet.data.OnchainWallet
 
 private const val TAG = "SettingsScreen"
 
@@ -134,13 +133,14 @@ fun SettingsScreen(navController: NavController) {
         // Get new address
         SettingButton(
             label = "Get new address",
-            onClick = { Log.i(TAG, "New bitcoin address: ${Global.wallet!!.getAddress(AddressIndex.NEW).address}") }
+            onClick = { Log.i(TAG, "New bitcoin address: ${OnchainWallet.getNewAddress()}") }
+            // onClick = { Log.i(TAG, "New bitcoin address: ${Global.wallet!!.getAddress(AddressIndex.NEW).address}") }
         )
 
         // Get balance
         SettingButton(
             label = "Get balance",
-            onClick = { Log.i(TAG, "On chain balance: ${Global.wallet!!.getBalance()}") }
+            onClick = { Log.i(TAG, "On chain balance: ${OnchainWallet.getBalance()}") }
         )
     }
 }
