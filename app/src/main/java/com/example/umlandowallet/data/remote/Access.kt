@@ -13,13 +13,13 @@ interface Access {
     suspend fun syncBestBlockConnected(
         channelManager: ChannelManager,
         chainMonitor: ChainMonitor
-    ) : Unit
+    ): Unit
 
     suspend fun syncTransactionConfirmed(
         relevantTxIds: Array<ByteArray>,
         channelManager: ChannelManager,
         chainMonitor: ChainMonitor
-    ) : Unit
+    ): Unit
 
     suspend fun syncTransactionsUnconfirmed(
         relevantTxIds: Array<ByteArray>,

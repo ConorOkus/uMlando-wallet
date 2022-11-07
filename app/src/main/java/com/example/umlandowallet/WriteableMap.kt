@@ -1,8 +1,8 @@
 package com.example.umlandowallet
 
 class WritableMap {
-    var json: String = "";
-    var first = true;
+    var json: String = ""
+    var first = true
 
 //    fun putNull(@NonNull var1: String?)
 //    fun putBoolean(@NonNull var1: String?, var2: Boolean)
@@ -20,6 +20,6 @@ class WritableMap {
 //    fun copy(): WritableMap?
 
     override fun toString(): String {
-        return "{$json}";
+        return "{$json}"
     }
 }
