@@ -2,6 +2,7 @@ package com.example.umlandowallet
 
 import com.example.umlandowallet.data.OnchainWallet
 import org.ldk.structs.*
+import kotlin.random.Random
 
 fun handleEvent(event: Event) {
     if (event is Event.FundingGenerationReady) {
@@ -13,7 +14,6 @@ fun handleEvent(event: Event) {
             params.putString("counterparty_node_id", event.counterparty_node_id.toHex())
             params.putString("channel_value_satoshis", event.channel_value_satoshis.toString())
             params.putString("output_script", event.output_script.toHex())
-            println("output_script" + event.output_script.toHex())
             params.putString("temporary_channel_id", event.temporary_channel_id.toHex())
             params.putString("user_channel_id", event.user_channel_id.toString())
             Global.temporaryChannelId = event.temporary_channel_id
@@ -29,6 +29,28 @@ fun handleEvent(event: Event) {
                 rawTx
             )
         }
+    }
+
+    if (event is Event.OpenChannelRequest) {
+        val params = WritableMap()
+        val userChannelId = Random.nextLong(0, 100)
+
+        params.putString("counterparty_node_id", event.counterparty_node_id.toHex())
+        params.putString("temporary_channel_id", event.temporary_channel_id.toHex())
+        params.putString("push_sat", (event.push_msat.toInt() / 1000).toString())
+        params.putString("funding_satoshis", event.funding_satoshis.toString())
+        params.putString("channel_type", event.channel_type.toString())
+
+        Global.temporaryChannelId = event.temporary_channel_id
+        Global.counterpartyNodeId = event.counterparty_node_id
+        storeEvent("${Global.homeDir}/events_open_channel_request", params)
+        Global.eventsFundingGenerationReady = Global.eventsFundingGenerationReady.plus(params.toString())
+
+        Global.channelManager!!.accept_inbound_channel(
+            event.temporary_channel_id,
+            event.counterparty_node_id,
+            userChannelId
+        )
     }
 
     if (event is Event.ChannelClosed) {
