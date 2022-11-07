@@ -34,17 +34,12 @@ class ServiceImpl(private val client: HttpClient) : Service {
         return response.body()
     }
 
-    override suspend fun getHexTx(txid: String): String {
-        return client.get("http://10.0.2.2:3002/tx/${txid}/hex").body()
+    override suspend fun getTx(txid: String): Tx {
+        return client.get("http://10.0.2.2:3002/tx/${txid}").body()
     }
 
-    override suspend fun getTx(txid: String): TxResponse {
-        val response: HttpResponse = client.get("http://10.0.2.2:3002/tx/${txid}")
-
-        val txJson: Tx = response.body()
-        val txByteArray: ByteArray = response.body()
-
-        return TxResponse(txByteArray, txJson)
+    override suspend fun getTxHex(txid: String): String {
+        return client.get("http://10.0.2.2:3002/tx/${txid}/hex").body()
     }
 
     override suspend fun getTxStatus(txid: String): TxStatus {
