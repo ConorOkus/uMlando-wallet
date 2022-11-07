@@ -5,7 +5,7 @@ This project uses a .aar package for the Android platforms that provide language
 language bindings are created by the [ldk-garbagecollected](https://github.com/lightningdevkit/ldk-garbagecollected) project and the latest release can be found
 [here](https://github.com/lightningdevkit/ldk-garbagecollected/releases).
 
-To setup a local regtest development environment check out this [blog post](https://thunderbiscuit.com/posts/regtest-galore/) by @thunderbiscuit.
+To setup a local regtest development environment check out this [blog post](https://thunderbiscuit.com/posts/regtest-galore/) by [thunderbiscuit](https://twitter.com/thunderB__).
 
 ## How to use
 To include the LDK Kotlin bindings in an Android project download the latest binary from [here](https://github.com/lightningdevkit/ldk-garbagecollected/releases)
