@@ -14,7 +14,7 @@ import java.io.IOException
 import java.net.InetSocketAddress
 
 fun start(
-    entropy: String,
+    entropy: ByteArray,
     latestBlockHeight: Int,
     latestBlockHash: String,
     serializedChannelManager: String,
@@ -53,7 +53,7 @@ fun start(
 
     // Providing keys for signing lightning transactions
     Global.keysManager = KeysManager.of(
-        entropy.toByteArray(),
+        entropy,
         System.currentTimeMillis() / 1000,
         (System.currentTimeMillis() * 1000).toInt()
     )

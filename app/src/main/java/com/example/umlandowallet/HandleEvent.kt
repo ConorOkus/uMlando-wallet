@@ -1,6 +1,6 @@
 package com.example.umlandowallet
 
-import com.example.umlandowallet.ui.buildFundingTx
+import com.example.umlandowallet.data.OnchainWallet
 import org.ldk.structs.*
 
 fun handleEvent(event: Event) {
@@ -21,7 +21,7 @@ fun handleEvent(event: Event) {
             storeEvent("${Global.homeDir}/events_funding_generation_ready", params)
             Global.eventsFundingGenerationReady = Global.eventsFundingGenerationReady.plus(params.toString())
 
-            val rawTx = buildFundingTx(event.channel_value_satoshis, event.output_script)
+            val rawTx = OnchainWallet.buildFundingTx(event.channel_value_satoshis, event.output_script)
 
             Global.channelManager!!.funding_transaction_generated(
                 event.temporary_channel_id,
