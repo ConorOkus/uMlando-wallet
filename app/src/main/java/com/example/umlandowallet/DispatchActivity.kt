@@ -13,8 +13,6 @@ class DispatchActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val entropy = "42C3818EC03AE97D74E817B9C6B6D7AA0E382ED9CA286CF4C0CDB43EF3C8D07B"
-
         val blockchain = createBlockchain()
         Global.blockchain = blockchain
 
@@ -28,7 +26,7 @@ class DispatchActivity : AppCompatActivity() {
         }
 
         // Initialize the LDK data directory if necessary.
-        Global.homeDir += "/" + sha256(sha256(entropy)).substring(0, 8)
+        Global.homeDir += "/" + "ldk-data"
         val ldkDataDirectory = File(Global.homeDir)
         if(!ldkDataDirectory.exists()) {
             ldkDataDirectory.mkdir()
@@ -50,9 +48,6 @@ class DispatchActivity : AppCompatActivity() {
 
         serializedChannelMonitors = monitors.joinToString(separator = ",")
 
-        println("serializedChannelManager: $serializedChannelManager")
-        println("serializedChannelMonitors: $serializedChannelMonitors")
-
         var mnemonic: String
 
         try {
@@ -70,7 +65,7 @@ class DispatchActivity : AppCompatActivity() {
         val externalDescriptor = "wpkh(${derivedKey.extend(DerivationPath("m/0")).asString()})"
         val internalDescriptor = "wpkh(${derivedKey.extend(DerivationPath("m/1")).asString()})"
 
-        // USE BDK WALLET ENTROPY TO SEED LDK
+        val ldkEntropy = getEntropy(mnemonic)
 
         val databaseConfig = DatabaseConfig.Memory
 
@@ -83,10 +78,25 @@ class DispatchActivity : AppCompatActivity() {
 
         Log.i(TAG, "Successfully created/restored wallet with mnemonic $mnemonic")
 
-        start(entropy, latestBlockHeight.toInt(), latestBlockHash, serializedChannelManager, serializedChannelMonitors)
+        start(ldkEntropy.toHex(), latestBlockHeight.toInt(), latestBlockHash, serializedChannelManager, serializedChannelMonitors)
 
         startActivity(Intent(this, MainActivity::class.java))
     }
+}
+
+@OptIn(ExperimentalUnsignedTypes::class)
+private fun getEntropy(mnemonic: String): ByteArray {
+    val bip32RootKey: DescriptorSecretKey = DescriptorSecretKey(
+        network = Network.REGTEST,
+        mnemonic = mnemonic,
+        password = null,
+    )
+    val derivationPath = DerivationPath("m/535h")
+    val child: DescriptorSecretKey = bip32RootKey.derive(derivationPath)
+    val entropy: ByteArray = child.secretBytes().toUByteArray().toByteArray()
+
+    println("Entropy used for LDK is ${entropy.toHex()}")
+    return entropy
 }
 
 fun createBlockchain(): Blockchain {
