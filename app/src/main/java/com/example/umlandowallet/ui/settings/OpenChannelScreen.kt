@@ -1,5 +1,6 @@
 package com.example.umlandowallet.ui.settings
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -13,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.umlandowallet.Global
 import com.example.umlandowallet.toByteArray
+import com.example.umlandowallet.utils.LDKTAG
 import org.ldk.structs.ChannelHandshakeConfig
 import org.ldk.structs.Result__u832APIErrorZ
 import org.ldk.structs.UserConfig
@@ -80,10 +82,10 @@ fun createChannel(pubKey: String) {
     )
 
     if (createChannelResult !is Result__u832APIErrorZ.Result__u832APIErrorZ_OK) {
-        println("ERROR: failed to open channel with: $pubKey")
+        Log.i(LDKTAG, "ERROR: failed to open channel with: $pubKey")
     }
 
     if(createChannelResult.is_ok) {
-        println("EVENT: initiated channel with peer: $pubKey")
+        Log.i(LDKTAG, "EVENT: initiated channel with peer: $pubKey")
     }
 }

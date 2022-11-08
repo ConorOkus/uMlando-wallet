@@ -25,8 +25,8 @@ class AccessImpl(
     ) {
         val service = Service.create()
 
-        val height = service.getlatestBlockHeight()
-        val hash = service.getlatestBlockHash()
+        val height = service.getLatestBlockHeight()
+        val hash = service.getLatestBlockHash()
         val header = service.getHeader(hash)
 
         channelManager.as_Confirm().best_block_updated(header.toByteArray(), height)

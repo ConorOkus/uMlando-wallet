@@ -14,11 +14,10 @@ import com.example.umlandowallet.ChannelManagerEventHandler
 import com.example.umlandowallet.Global
 import com.example.umlandowallet.data.OnchainWallet
 import com.example.umlandowallet.data.remote.Access
+import com.example.umlandowallet.utils.LDKTAG
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-
-private const val TAG = "WalletScreen"
 
 @Composable
 fun WalletScreen() {
@@ -68,7 +67,7 @@ fun WalletScreen() {
                         ChannelManagerEventHandler, Global.scorer!!)
                 }
 
-                Log.i(TAG, "Wallet synced")
+                Log.i(LDKTAG, "Wallet synced")
             },
             modifier = Modifier
                 .padding(start = 24.dp, end = 24.dp)

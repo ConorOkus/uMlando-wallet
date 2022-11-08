@@ -1,11 +1,13 @@
 package com.example.umlandowallet.data.remote
 
+import android.util.Log
 import com.example.umlandowallet.Global
 import com.example.umlandowallet.data.MerkleProof
 import com.example.umlandowallet.data.Tx
 import com.example.umlandowallet.data.TxStatus
 import com.example.umlandowallet.toByteArray
 import com.example.umlandowallet.toHex
+import com.example.umlandowallet.utils.LDKTAG
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -55,16 +57,16 @@ class ServiceImpl(private val client: HttpClient) : Service {
     }
 
     override suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int): Boolean {
-        println("LDK: attempting to connect to peer $pubkeyHex")
+        Log.i(LDKTAG, "LDK: attempting to connect to peer $pubkeyHex")
         return try {
             Global.nioPeerHandler!!.connect(
                 pubkeyHex.toByteArray(),
                 InetSocketAddress(hostname, port), 5555
             )
-            println("LDK: successfully connected to peer $pubkeyHex")
+            Log.i(LDKTAG, "LDK: successfully connected to peer $pubkeyHex")
             true
         } catch (e: IOException) {
-            println("connectPeer exception: " + e.message)
+            Log.i(LDKTAG, "connectPeer exception: " + e.message)
             false
         }
     }

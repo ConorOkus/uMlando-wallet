@@ -1,12 +1,14 @@
 package com.example.umlandowallet
 
+import android.util.Log
 import com.example.umlandowallet.data.OnchainWallet
+import com.example.umlandowallet.utils.LDKTAG
 import org.ldk.structs.*
 import kotlin.random.Random
 
 fun handleEvent(event: Event) {
     if (event is Event.FundingGenerationReady) {
-        println("FundingGenerationReady")
+        Log.i(LDKTAG, "FundingGenerationReady")
         val funding_spk = event.output_script
         if (funding_spk.size == 34 && funding_spk[0].toInt() == 0 && funding_spk[1].toInt() == 32) {
             val params = WritableMap()
@@ -14,6 +16,7 @@ fun handleEvent(event: Event) {
             params.putString("counterparty_node_id", event.counterparty_node_id.toHex())
             params.putString("channel_value_satoshis", event.channel_value_satoshis.toString())
             params.putString("output_script", event.output_script.toHex())
+            Log.i(LDKTAG, "Output script is ${event.output_script.toHex()}")
             params.putString("temporary_channel_id", event.temporary_channel_id.toHex())
             params.putString("user_channel_id", event.user_channel_id.toString())
             Global.temporaryChannelId = event.temporary_channel_id
@@ -54,9 +57,9 @@ fun handleEvent(event: Event) {
     }
 
     if (event is Event.ChannelClosed) {
-        println("ChannelClosed");
+        Log.i(LDKTAG, "ChannelClosed")
         val params = WritableMap()
-        val reason = event.reason;
+        val reason = event.reason
         params.putString("channel_id", event.channel_id.toHex())
         params.putString("user_channel_id", event.user_channel_id.toString())
 
