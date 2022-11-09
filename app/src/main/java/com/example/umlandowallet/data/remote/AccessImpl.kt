@@ -1,5 +1,7 @@
 package com.example.umlandowallet.data.remote
 
+import com.example.umlandowallet.ChannelManagerEventHandler
+import com.example.umlandowallet.Global
 import com.example.umlandowallet.data.*
 import com.example.umlandowallet.toByteArray
 import com.example.umlandowallet.toHex
@@ -9,10 +11,29 @@ import org.ldk.structs.ChannelManager
 import org.ldk.structs.TwoTuple_usizeTransactionZ
 
 class AccessImpl(
-    private val blockchain: Blockchain,
 ) : Access {
     override suspend fun sync() {
-        val currentHeight = blockchain.getHeight()
+        this.syncWallet(OnchainWallet)
+
+        val relevantTxIdsFromChannelManager: Array<ByteArray> =
+            Global.channelManager!!.as_Confirm()._relevant_txids
+        val relevantTxIdsFromChainMonitor: Array<ByteArray> =
+            Global.chainMonitor!!.as_Confirm()._relevant_txids
+
+        val relevantTxIds: Array<ByteArray> =
+            relevantTxIdsFromChannelManager + relevantTxIdsFromChainMonitor
+
+        this.syncTransactionConfirmed(relevantTxIds, Global.channelManager!!, Global.chainMonitor!!)
+        this.syncTransactionsUnconfirmed(
+            relevantTxIds,
+            Global.channelManager!!,
+            Global.chainMonitor!!
+        )
+        this.syncBestBlockConnected(Global.channelManager!!, Global.chainMonitor!!)
+
+        Global.channelManagerConstructor!!.chain_sync_completed(
+            ChannelManagerEventHandler, Global.scorer!!
+        )
     }
 
     override suspend fun syncWallet(onchainWallet: OnchainWallet) {
@@ -48,18 +69,17 @@ class AccessImpl(
             if (txStatus.confirmed) {
                 val txHex = service.getTxHex(txId)
                 val tx = service.getTx(txId)
-                if (tx.status.block_height != null) {
-                    val blockHeader = service.getHeader(tx.status.block_hash)
-                    val merkleProof = service.getMerkleProof(txId)
-                    if (tx.status.block_height == merkleProof.block_height) {
-                        confirmedTxs.add(ConfirmedTx(
-                                tx = txHex.toByteArray(),
-                                block_height = tx.status.block_height,
-                                block_header = blockHeader,
-                                merkle_proof_pos = merkleProof.pos
-                            )
+                val blockHeader = service.getHeader(tx.status.block_hash)
+                val merkleProof = service.getMerkleProof(txId)
+                if (tx.status.block_height == merkleProof.block_height) {
+                    confirmedTxs.add(
+                        ConfirmedTx(
+                            tx = txHex.toByteArray(),
+                            block_height = tx.status.block_height,
+                            block_header = blockHeader,
+                            merkle_proof_pos = merkleProof.pos
                         )
-                    }
+                    )
                 }
             }
         }
@@ -68,13 +88,23 @@ class AccessImpl(
         for (cTx in confirmedTxs) {
             channelManager.as_Confirm().transactions_confirmed(
                 cTx.block_header.toByteArray(),
-                arrayOf<TwoTuple_usizeTransactionZ>(TwoTuple_usizeTransactionZ.of(cTx.block_height.toLong(), cTx.tx)),
+                arrayOf<TwoTuple_usizeTransactionZ>(
+                    TwoTuple_usizeTransactionZ.of(
+                        cTx.block_height.toLong(),
+                        cTx.tx
+                    )
+                ),
                 cTx.block_height
             )
 
             chainMonitor.as_Confirm().transactions_confirmed(
                 cTx.block_header.toByteArray(),
-                arrayOf<TwoTuple_usizeTransactionZ>(TwoTuple_usizeTransactionZ.of(cTx.block_height.toLong(), cTx.tx)),
+                arrayOf<TwoTuple_usizeTransactionZ>(
+                    TwoTuple_usizeTransactionZ.of(
+                        cTx.block_height.toLong(),
+                        cTx.tx
+                    )
+                ),
                 cTx.block_height
             )
         }

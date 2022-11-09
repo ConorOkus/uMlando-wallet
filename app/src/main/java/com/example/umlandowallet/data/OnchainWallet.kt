@@ -76,8 +76,8 @@ object OnchainWallet {
     fun buildFundingTx(value: Long, script: ByteArray): ByteArray {
         sync()
         val scriptListUByte: List<UByte> = script.toUByteArray().asList()
-        val outputScript: Script = Script(scriptListUByte)
-        val (psbt, txDetails) = TxBuilder()
+        val outputScript = Script(scriptListUByte)
+        val (psbt, _) = TxBuilder()
             .addRecipient(outputScript, value.toULong())
             .feeRate(4.0F)
             .finish(onchainWallet)

@@ -71,12 +71,6 @@ fun start(
             channelMonitorList.add(channelMonitorBytes)
         }
         channelMonitors = channelMonitorList.toTypedArray()
-
-//        val list = Global.chainMonitor!!.list_monitors()
-//        list.iterator().forEach { outPoint ->
-//            val monitor  = // Retrieve channel monitor saved in step 4
-//            Global.chainMonitor!!.as_Watch().watch_channel(outPoint, monitor)
-//        }
     }
 
     // This is going to be the fee policy for __incoming__ channels. they are set upfront globally:
@@ -117,10 +111,6 @@ fun start(
             )
 
             Global.channelManager = Global.channelManagerConstructor!!.channel_manager
-            Global.channelManagerConstructor!!.chain_sync_completed(
-                ChannelManagerEventHandler,
-                scorer
-            )
             Global.peerManager = Global.channelManagerConstructor!!.peer_manager
             Global.nioPeerHandler = Global.channelManagerConstructor!!.nio_peer_handler
             Global.router = Global.channelManagerConstructor!!.net_graph
@@ -139,13 +129,13 @@ fun start(
                 logger
             )
             Global.channelManager = Global.channelManagerConstructor!!.channel_manager
+            Global.peerManager = Global.channelManagerConstructor!!.peer_manager
+            Global.nioPeerHandler = Global.channelManagerConstructor!!.nio_peer_handler
+            Global.router = Global.channelManagerConstructor!!.net_graph
             Global.channelManagerConstructor!!.chain_sync_completed(
                 ChannelManagerEventHandler,
                 scorer
             )
-            Global.peerManager = Global.channelManagerConstructor!!.peer_manager
-            Global.nioPeerHandler = Global.channelManagerConstructor!!.nio_peer_handler
-            Global.router = Global.channelManagerConstructor!!.net_graph
         }
 
         // If you want to communicate from your computer to your emulator,
@@ -181,7 +171,7 @@ object LDKBroadcaster : BroadcasterInterface.BroadcasterInterfaceInterface {
         val service = Service.create()
 
         tx?.let {
-            GlobalScope.launch {
+            CoroutineScope(Dispatchers.IO).launch {
                 val txid = service.broadcastTx(tx)
                 Log.i(LDKTAG, "We've broadcast a transaction with txid $txid")
             }

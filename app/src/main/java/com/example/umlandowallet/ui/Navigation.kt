@@ -137,6 +137,23 @@ fun Navigation(
             }
         ) { OpenChannelScreen() }
 
+        // List a channel
+        composable(
+            route = Screen.ListChannelsScreen.route,
+            enterTransition = {
+                slideIntoContainer(AnimatedContentScope.SlideDirection.Up, animationSpec = tween(animationDuration))
+            },
+            popEnterTransition = {
+                slideIntoContainer(AnimatedContentScope.SlideDirection.Up, animationSpec = tween(animationDuration))
+            },
+            exitTransition = {
+                slideOutOfContainer(AnimatedContentScope.SlideDirection.Down, animationSpec = tween(animationDuration))
+            },
+            popExitTransition = {
+                slideOutOfContainer(AnimatedContentScope.SlideDirection.Down, animationSpec = tween(animationDuration))
+            }
+        ) { ListChannelsScreen() }
+
         // Recovery phrase
         composable(
             route = Screen.RecoveryPhraseScreen.route,
