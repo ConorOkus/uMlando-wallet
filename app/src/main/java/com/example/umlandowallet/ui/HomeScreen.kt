@@ -13,11 +13,13 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.example.umlandowallet.utils.NavigationItem
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 internal fun HomeScreen() {
     val navController: NavHostController = rememberAnimatedNavController()
+    SystemBars()
 
     Scaffold(bottomBar = { BottomNavigationBar(navController) }) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
@@ -74,5 +76,21 @@ internal fun BottomNavigationBar(navController: NavController) {
                 )
             )
         }
+    }
+}
+
+@Composable
+internal fun SystemBars() {
+    rememberSystemUiController().apply {
+        setStatusBarColor(
+            color = Color.Transparent,
+            darkIcons = true
+        )
+        // setNavigationBarColor(
+        //     color = Color.Transparent,
+        //     darkIcons = true
+        // )
+        // this.isNavigationBarVisible = false
+        // this.isStatusBarVisible = false
     }
 }
