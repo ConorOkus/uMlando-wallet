@@ -21,6 +21,8 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun WalletScreen() {
+    val accessImpl = AccessImpl()
+
     Column(
         modifier = Modifier
             .padding(top = 48.dp)
@@ -48,7 +50,7 @@ fun WalletScreen() {
         Button(
             onClick = {
                 CoroutineScope(Dispatchers.IO).launch {
-                    Access.create().sync()
+                    accessImpl.sync()
                 }
 
                 Log.i(LDKTAG, "Wallet synced")
