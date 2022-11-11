@@ -8,7 +8,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.umlandowallet.data.remote.Access
 import com.example.umlandowallet.data.remote.Service
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
@@ -62,17 +65,10 @@ fun ConnectPeerScreen() {
         )
         Button(
             onClick = {
-                // val pubKey = pubKey
                 val host = "10.0.2.2"
-                // val port = port
 
-                GlobalScope.launch {
-                    val hasConnected = service.connectPeer(pubKey, host, port.toInt())
-                    if(hasConnected) {
-                        setConnectPeerStatus("Successfully connected to peer")
-                    } else {
-                        setConnectPeerStatus("Failed to connect")
-                    }
+                CoroutineScope(Dispatchers.IO).launch {
+                    service.connectPeer(pubKey, host, port.toInt())
                 }
             },
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),

@@ -29,7 +29,7 @@ interface Service {
 
     suspend fun getMerkleProof(txid: String) : MerkleProof
 
-    suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int) : Boolean
+    suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int)
 
     companion object {
         fun create() : Service {

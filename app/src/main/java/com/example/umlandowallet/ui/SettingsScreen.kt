@@ -101,6 +101,19 @@ fun SettingsScreen(navController: NavController) {
                 }
             }
         )
+
+        // List channels
+        SettingButton(
+            label = "List channels",
+            onClick = {
+                navController.navigate(Screen.ListChannelsScreen.route) {
+                    navController.graph.startDestinationRoute?.let { route ->
+                        popUpTo(route)
+                    }
+                    launchSingleTop = true
+                }
+            }
+        )
         Text(
             text = "Onchain Wallet",
             fontSize = 18.sp,

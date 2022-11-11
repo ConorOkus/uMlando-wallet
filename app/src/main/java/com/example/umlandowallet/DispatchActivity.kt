@@ -45,6 +45,8 @@ class DispatchActivity : AppCompatActivity() {
 
         serializedChannelMonitors = monitors.joinToString(separator = ",")
 
+        Log.i(TAG, "Successfully created/restored wallet with mnemonic ${OnchainWallet.recoveryPhrase()}")
+
         start(
             OnchainWallet.getLdkEntropy(),
             latestBlockHeight.toInt(),

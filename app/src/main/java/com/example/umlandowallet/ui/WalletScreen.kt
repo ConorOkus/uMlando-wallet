@@ -21,6 +21,8 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun WalletScreen() {
+    val accessImpl = AccessImpl()
+
     Column(
         modifier = Modifier
             .padding(top = 48.dp)
@@ -47,24 +49,8 @@ fun WalletScreen() {
         )
         Button(
             onClick = {
-                val relevantTxIdsFromChannelManager: Array<ByteArray> = Global.channelManager!!.as_Confirm()._relevant_txids
-                val relevantTxIdsFromChainMonitor: Array<ByteArray> = Global.chainMonitor!!.as_Confirm()._relevant_txids
-
-                val relevantTxIds: Array<ByteArray> = relevantTxIdsFromChannelManager + relevantTxIdsFromChainMonitor
-
                 CoroutineScope(Dispatchers.IO).launch {
-                    val access = Access.create()
-
-                    // Sync BDK wallet
-                    access.syncWallet(OnchainWallet)
-
-                    // Sync LDK/Lightning
-                    access.syncTransactionsUnconfirmed(relevantTxIds, Global.channelManager!!, Global.chainMonitor!!)
-                    access.syncTransactionConfirmed(relevantTxIds, Global.channelManager!!, Global.chainMonitor!!)
-                    access.syncBestBlockConnected(Global.channelManager!!, Global.chainMonitor!!)
-
-                    Global.channelManagerConstructor!!.chain_sync_completed(
-                        ChannelManagerEventHandler, Global.scorer!!)
+                    accessImpl.sync()
                 }
 
                 Log.i(LDKTAG, "Wallet synced")
