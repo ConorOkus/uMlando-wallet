@@ -5,13 +5,11 @@ import com.example.umlandowallet.Global
 import com.example.umlandowallet.data.*
 import com.example.umlandowallet.toByteArray
 import com.example.umlandowallet.toHex
-import org.bitcoindevkit.Blockchain
 import org.ldk.structs.ChainMonitor
 import org.ldk.structs.ChannelManager
 import org.ldk.structs.TwoTuple_usizeTransactionZ
 
-class AccessImpl(
-) : Access {
+class AccessImpl: Access {
     override suspend fun sync() {
         this.syncWallet(OnchainWallet)
 
@@ -65,10 +63,9 @@ class AccessImpl(
         val confirmedTxs = mutableListOf<ConfirmedTx>()
         for (txid in relevantTxIds) {
             val txId = txid.reversedArray().toHex()
-            val txStatus: TxStatus = service.getTxStatus(txId)
-            if (txStatus.confirmed) {
+            val tx = service.getTx(txId)
+            if (tx.status.confirmed) {
                 val txHex = service.getTxHex(txId)
-                val tx = service.getTx(txId)
                 val blockHeader = service.getHeader(tx.status.block_hash)
                 val merkleProof = service.getMerkleProof(txId)
                 if (tx.status.block_height == merkleProof.block_height) {
@@ -119,8 +116,8 @@ class AccessImpl(
 
         for (txid in relevantTxIds) {
             val txId = txid.reversedArray().toHex()
-            val txStatus: TxStatus = service.getTxStatus(txId)
-            if (!txStatus.confirmed) {
+            val tx: Tx = service.getTx(txId)
+            if (tx.status.confirmed) {
                 channelManager.as_Confirm().transaction_unconfirmed(txId.toByteArray())
                 chainMonitor.as_Confirm().transaction_unconfirmed(txId.toByteArray())
             }

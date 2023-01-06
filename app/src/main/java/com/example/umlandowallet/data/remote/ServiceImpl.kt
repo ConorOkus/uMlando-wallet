@@ -43,11 +43,6 @@ class ServiceImpl(private val client: HttpClient) : Service {
         return client.get("http://10.0.2.2:3002/tx/${txid}/hex").body()
     }
 
-    override suspend fun getTxStatus(txid: String): TxStatus {
-        val response: Tx = client.get("http://10.0.2.2:3002/tx/${txid}").body()
-        return response.status
-    }
-
     override suspend fun getHeader(hash: String): String {
         return client.get("http://10.0.2.2:3002/block/${hash}/header").body()
     }
@@ -56,18 +51,16 @@ class ServiceImpl(private val client: HttpClient) : Service {
         return client.get("http://10.0.2.2:3002/tx/${txid}/merkle-proof").body()
     }
 
-    override suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int): Boolean {
+    override suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int) {
         Log.i(LDKTAG, "LDK: attempting to connect to peer $pubkeyHex")
-        return try {
+        try {
             Global.nioPeerHandler!!.connect(
                 pubkeyHex.toByteArray(),
                 InetSocketAddress(hostname, port), 5555
             )
             Log.i(LDKTAG, "LDK: successfully connected to peer $pubkeyHex")
-            true
         } catch (e: IOException) {
             Log.i(LDKTAG, "connectPeer exception: " + e.message)
-            false
         }
     }
 }
