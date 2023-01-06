@@ -15,12 +15,6 @@ data class TxStatus(
     val block_hash: String,
 )
 
-@Serializable
-data class TxResponse(
-    val txByteArray: ByteArray,
-    val tx: Tx
-)
-
 data class ConfirmedTx(
     val tx: ByteArray,
     val block_height: Int,

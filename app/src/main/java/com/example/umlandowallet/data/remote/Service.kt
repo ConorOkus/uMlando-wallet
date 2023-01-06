@@ -2,8 +2,6 @@ package com.example.umlandowallet.data.remote
 
 import com.example.umlandowallet.data.MerkleProof
 import com.example.umlandowallet.data.Tx
-import com.example.umlandowallet.data.TxResponse
-import com.example.umlandowallet.data.TxStatus
 import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
@@ -23,7 +21,7 @@ interface Service {
 
     suspend fun getTxHex(txid: String): String
 
-    suspend fun getTxStatus(txid: String) : TxStatus
+//    suspend fun getTxStatus(txid: String) : TxStatus
 
     suspend fun getHeader(hash: String) : String
 
