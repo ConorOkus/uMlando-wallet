@@ -29,21 +29,33 @@ class DispatchActivity : AppCompatActivity() {
         val latestBlockHeight = OnchainWallet.getHeight()
         val latestBlockHash = OnchainWallet.getBlockHash(latestBlockHeight)
 
-        var serializedChannelManager = ""
-        var serializedChannelMonitors = ""
-        var monitors = arrayOf<String>()
+        var serializedChannelManager: ByteArray? = null
+        var serializedChannelMonitors = arrayOf<ByteArray>()
 
-        File(Global.homeDir).walk().forEach {
-            if(it.name.startsWith(Global.prefixChannelManager)) {
-                serializedChannelManager = it.absoluteFile.readText(Charsets.UTF_8)
-            }
-            if(it.name.startsWith(Global.prefixChannelMonitor)) {
-                val serializedMonitor = it.absoluteFile.readText(Charsets.UTF_8)
-                monitors = monitors.plus(serializedMonitor)
-            }
+        val channelManagerFile = File("${Global.homeDir}/channel-manager.bin")
+        if(channelManagerFile.exists()) {
+            serializedChannelManager = channelManagerFile.absoluteFile.readBytes()
         }
 
-        serializedChannelMonitors = monitors.joinToString(separator = ",")
+        // Read Channel Monitor state from disk
+        // Initialize the hashmap where we'll store the `ChannelMonitor`s read from disk.
+        // This hashmap will later be given to the `ChannelManager` on initialization.
+        val channelMonitorDirectory = File("${Global.homeDir}/channels/")
+        if (channelMonitorDirectory.isDirectory) {
+            val files: Array<String> = channelMonitorDirectory.list()
+            if (files.isNotEmpty()) {
+                val channelMonitorList = serializedChannelMonitors.toMutableList()
+                files.forEach {
+                    channelMonitorList.add(File("${channelMonitorDirectory}/${it}").readBytes())
+                }
+
+                serializedChannelMonitors = channelMonitorList.toTypedArray()
+
+            }
+        } else {
+            channelMonitorDirectory.mkdir()
+            Log.i(LDKTAG, "Creating directory at $channelMonitorDirectory")
+        }
 
         Log.i(LDKTAG, "Successfully created/restored wallet with mnemonic ${OnchainWallet.recoveryPhrase()}")
 

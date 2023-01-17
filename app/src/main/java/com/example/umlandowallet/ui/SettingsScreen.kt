@@ -114,6 +114,20 @@ fun SettingsScreen(navController: NavController) {
                 }
             }
         )
+
+        // Send payment
+        SettingButton(
+            label = "Send payment",
+            onClick = {
+                navController.navigate(Screen.SendPaymentScreen.route) {
+                    navController.graph.startDestinationRoute?.let { route ->
+                        popUpTo(route)
+                    }
+                    launchSingleTop = true
+                }
+            }
+        )
+
         Text(
             text = "Onchain Wallet",
             fontSize = 18.sp,

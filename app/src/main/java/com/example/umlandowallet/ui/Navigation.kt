@@ -154,6 +154,23 @@ fun Navigation(
             }
         ) { ListChannelsScreen() }
 
+        // Send Payment
+        composable(
+            route = Screen.SendPaymentScreen.route,
+            enterTransition = {
+                slideIntoContainer(AnimatedContentScope.SlideDirection.Up, animationSpec = tween(animationDuration))
+            },
+            popEnterTransition = {
+                slideIntoContainer(AnimatedContentScope.SlideDirection.Up, animationSpec = tween(animationDuration))
+            },
+            exitTransition = {
+                slideOutOfContainer(AnimatedContentScope.SlideDirection.Down, animationSpec = tween(animationDuration))
+            },
+            popExitTransition = {
+                slideOutOfContainer(AnimatedContentScope.SlideDirection.Down, animationSpec = tween(animationDuration))
+            }
+        ) { SendPaymentScreen() }
+
         // Recovery phrase
         composable(
             route = Screen.RecoveryPhraseScreen.route,
