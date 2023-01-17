@@ -18,7 +18,7 @@ object OnchainWallet {
 
     private fun createOnchainWallet() {
         val mnemonic = loadMnemonic()
-        val descriptorSecretKey = DescriptorSecretKey(Network.REGTEST, mnemonic, null)
+        val descriptorSecretKey = DescriptorSecretKey(Network.REGTEST, Mnemonic.fromString(mnemonic), null)
         val derivedKey = descriptorSecretKey.derive(DerivationPath("m/84h/1h/0h"))
         val externalDescriptor = "wpkh(${derivedKey.extend(DerivationPath("m/0")).asString()})"
         val internalDescriptor = "wpkh(${derivedKey.extend(DerivationPath("m/1")).asString()})"
@@ -61,7 +61,7 @@ object OnchainWallet {
         val mnemonic: String = loadMnemonic()
         val bip32RootKey: DescriptorSecretKey = DescriptorSecretKey(
             network = Network.REGTEST,
-            mnemonic = mnemonic,
+            mnemonic = Mnemonic.fromString(mnemonic),
             password = null,
         )
         val derivationPath = DerivationPath("m/535h")
@@ -87,11 +87,11 @@ object OnchainWallet {
         return rawTx
     }
 
-    private fun sign(psbt: PartiallySignedBitcoinTransaction) {
+    private fun sign(psbt: PartiallySignedTransaction) {
         onchainWallet.sign(psbt)
     }
 
-    fun broadcast(signedPsbt: PartiallySignedBitcoinTransaction): String {
+    fun broadcast(signedPsbt: PartiallySignedTransaction): String {
         val blockchain = createBlockchain()
         blockchain.broadcast(signedPsbt)
         return signedPsbt.txid()
@@ -109,9 +109,9 @@ object OnchainWallet {
         } catch (e: Throwable) {
             // if mnemonic doesn't exist, generate one and save it
             Log.i(LDKTAG, "No mnemonic backup, we'll create a new wallet")
-            val mnemonic = generateMnemonic(WordCount.WORDS12)
-            File(Global.homeDir + "/" + "mnemonic.txt").writeText(mnemonic)
-            return mnemonic
+            val mnemonic = Mnemonic(WordCount.WORDS12)
+            File(Global.homeDir + "/" + "mnemonic.txt").writeText(mnemonic.asString())
+            return mnemonic.asString()
         }
     }
 

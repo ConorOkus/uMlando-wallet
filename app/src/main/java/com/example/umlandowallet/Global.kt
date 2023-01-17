@@ -1,5 +1,6 @@
 package com.example.umlandowallet
 
+import com.example.umlandowallet.data.WatchedTransaction
 import org.ldk.batteries.ChannelManagerConstructor
 import org.ldk.batteries.NioPeerHandler
 import org.ldk.structs.*
@@ -7,15 +8,10 @@ import org.ldk.structs.*
 object Global {
     @JvmField
     var homeDir: String = ""
-    val prefixChannelMonitor = "channel_monitor_"
-    val prefixChannelManager = "channel_manager"
-    val prefixNetworkGraph = "network_graph.bin"
-    val prefixScorer = "scorer"
 
-
-    val feerateFast = 2000 // estimate fee rate in BTC/kB
-    val feerateMedium = 2000 // estimate fee rate in BTC/kB
-    val feerateSlow = 2000 // estimate fee rate in BTC/kB
+    val feerateFast = 5000 // estimate fee rate in BTC/kB
+    val feerateMedium = 5000 // estimate fee rate in BTC/kB
+    val feerateSlow = 5000 // estimate fee rate in BTC/kB
 
     var eventsTxBroadcast: Array<String> = arrayOf<String>()
     var eventsPaymentSent: Array<String> = arrayOf<String>()
@@ -30,7 +26,6 @@ object Global {
 
     var refundAddressScript = ""
 
-    // var wallet: Wallet? = null
     var channelManager: ChannelManager? = null
     var keysManager: KeysManager? = null
     var chainMonitor: ChainMonitor? = null
@@ -43,6 +38,8 @@ object Global {
     var router: NetworkGraph? = null
     var p2pGossipSync: P2PGossipSync? = null
     var txFilter: Filter? = null
-    // var blockchain: Blockchain? = null
     var scorer: MultiThreadedLockableScore? = null
+    var invoicePayer: InvoicePayer? = null
+    val relevantTxs: ArrayList<WatchedTransaction> = arrayListOf()
+    val relevantOutputs: ArrayList<WatchedOutput> = arrayListOf()
 }

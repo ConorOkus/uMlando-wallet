@@ -89,4 +89,12 @@ fun handleEvent(event: Event) {
         storeEvent("${Global.homeDir}/events_channel_closed", params)
         Global.eventsChannelClosed = Global.eventsChannelClosed.plus(params.toString())
     }
+
+    if(event is Event.PaymentSent) {
+        Log.i(LDKTAG, "Payment Sent")
+    }
+
+    if(event is Event.PaymentFailed) {
+        Log.i(LDKTAG, "Payment Failed")
+    }
 }

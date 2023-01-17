@@ -8,5 +8,6 @@ sealed class Screen(val route: String) {
     object ConnectPeerScreen : Screen("connect_peer")
     object OpenChannelScreen : Screen("open_channel")
     object ListChannelsScreen : Screen("list_channels")
+    object SendPaymentScreen : Screen("send_payment")
     object RecoveryPhraseScreen : Screen("recovery_phrase")
 }

@@ -1,6 +1,7 @@
 package com.example.umlandowallet
 
 import android.util.Log
+import com.example.umlandowallet.data.WatchedTransaction
 import com.example.umlandowallet.data.remote.Service
 import com.example.umlandowallet.utils.LDKTAG
 import kotlinx.coroutines.CoroutineScope
@@ -16,16 +17,18 @@ import org.ldk.structs.Logger.LoggerInterface
 import java.io.File
 import java.net.InetSocketAddress
 
-
 fun start(
     entropy: ByteArray,
     latestBlockHeight: Int,
     latestBlockHash: String,
-    serializedChannelManager: String,
-    serializedChannelMonitors: String
+    serializedChannelManager: ByteArray?,
+    serializedChannelMonitors: Array<ByteArray>
 ) {
     Log.i(LDKTAG, "LDK starting...")
-    Log.i(LDKTAG, "This wallet is using the LDK Java bindings version ${org.ldk.impl.version.get_ldk_java_bindings_version()}")
+    Log.i(
+        LDKTAG,
+        "This wallet is using the LDK Java bindings version ${org.ldk.impl.version.get_ldk_java_bindings_version()}"
+    )
 
     // Estimating fees for on-chain transactions that LDK wants to broadcast.
     val feeEstimator: FeeEstimator = FeeEstimator.new_impl(LDKFeeEstimator)
@@ -54,7 +57,6 @@ fun start(
     // node, and broadcasting force close transactions if need be
     Global.chainMonitor = ChainMonitor.of(filter, txBroadcaster, logger, feeEstimator, persister)
 
-   
 
     // Providing keys for signing lightning transactions
     Global.keysManager = KeysManager.of(
@@ -63,48 +65,42 @@ fun start(
         (System.currentTimeMillis() * 1000).toInt()
     )
 
-    // Read Channel Monitor state from disk
-    // Initialize the hashmap where we'll store the `ChannelMonitor`s read from disk.
-    // This hashmap will later be given to the `ChannelManager` on initialization.
-    var channelMonitors = arrayOf<ByteArray>()
-    if (serializedChannelMonitors != "") {
-        Log.i(LDKTAG, "LDK: initiating channel monitors...")
-        val channelMonitorHexes = serializedChannelMonitors.split(",").toTypedArray()
-        val channelMonitorList = ArrayList<ByteArray>()
-        channelMonitorHexes.iterator().forEach {
-            val channelMonitorBytes = it.toByteArray()
-            channelMonitorList.add(channelMonitorBytes)
-        }
-        channelMonitors = channelMonitorList.toTypedArray()
-    }
-
     // This is going to be the fee policy for __incoming__ channels. they are set upfront globally:
     val userConfig = UserConfig.with_default()
     val newChannelConfig = ChannelConfig.with_default()
-    newChannelConfig.set_forwarding_fee_proportional_millionths(10000)
-    newChannelConfig.set_forwarding_fee_base_msat(1000)
-    userConfig.set_channel_config(newChannelConfig)
+    newChannelConfig._forwarding_fee_proportional_millionths = 10000
+    newChannelConfig._forwarding_fee_base_msat = 1000
+    userConfig._channel_config = newChannelConfig
 
 
-    val handshake = ChannelHandshakeConfig.with_default()
-    handshake.set_minimum_depth(1)
-    userConfig.set_channel_handshake_config(handshake)
+    val channelHandShakeConfig = ChannelHandshakeConfig.with_default()
+    channelHandShakeConfig._minimum_depth = 1
+    channelHandShakeConfig._announced_channel = false
+    userConfig._channel_handshake_config = channelHandShakeConfig
 
-    val newLim = ChannelHandshakeLimits.with_default()
-    newLim.set_force_announced_channel_preference(false)
-    userConfig.set_channel_handshake_limits(newLim)
+    val channelHandshakeLimits = ChannelHandshakeLimits.with_default()
+    channelHandshakeLimits._max_minimum_depth = 1
+    channelHandshakeLimits._force_announced_channel_preference = false
+    userConfig._channel_handshake_limits = channelHandshakeLimits
 
     val params = ProbabilisticScoringParameters.with_default()
-    val defaultScorer = ProbabilisticScorer.of(params, Global.router, logger).as_Score()
-    val scorer = MultiThreadedLockableScore.of(defaultScorer)
-    Global.scorer = scorer
+    val defaultScorer = ProbabilisticScorer.of(params, Global.router, logger)
+    val scoreRes = ProbabilisticScorer.read(
+        defaultScorer.write(), params, Global.router,
+        logger
+    )
+    if (!scoreRes.is_ok) {
+        Log.i(LDKTAG, "Initialising scoring failed")
+    }
+    val score = (scoreRes as Result_ProbabilisticScorerDecodeErrorZ.Result_ProbabilisticScorerDecodeErrorZ_OK).res.as_Score()
+    val scorer = MultiThreadedLockableScore.of(score)
 
     try {
-        if (serializedChannelManager != "") {
+        if (serializedChannelManager != null) {
             // loading from disk (restarting)
             Global.channelManagerConstructor = ChannelManagerConstructor(
-                serializedChannelManager.toByteArray(),
-                channelMonitors,
+                serializedChannelManager,
+                serializedChannelMonitors,
                 userConfig,
                 Global.keysManager?.as_KeysInterface(),
                 feeEstimator,
@@ -119,6 +115,8 @@ fun start(
             Global.peerManager = Global.channelManagerConstructor!!.peer_manager
             Global.nioPeerHandler = Global.channelManagerConstructor!!.nio_peer_handler
             Global.router = Global.channelManagerConstructor!!.net_graph
+            Global.invoicePayer = Global.channelManagerConstructor!!.payer
+            Global.scorer = scorer
         } else {
             // fresh start
             Global.channelManagerConstructor = ChannelManagerConstructor(
@@ -133,10 +131,13 @@ fun start(
                 txBroadcaster,
                 logger
             )
+
             Global.channelManager = Global.channelManagerConstructor!!.channel_manager
             Global.peerManager = Global.channelManagerConstructor!!.peer_manager
             Global.nioPeerHandler = Global.channelManagerConstructor!!.nio_peer_handler
             Global.router = Global.channelManagerConstructor!!.net_graph
+            Global.scorer = scorer
+            Global.invoicePayer = Global.channelManagerConstructor!!.payer
             Global.channelManagerConstructor!!.chain_sync_completed(
                 ChannelManagerEventHandler,
                 scorer
@@ -165,7 +166,8 @@ object LDKFeeEstimator : FeeEstimatorInterface {
 // which has 1 function: log(record: Record?): Unit
 object LDKLogger : LoggerInterface {
     override fun log(record: Record?) {
-//        println(record!!)
+        val rawLog = record!!._args.toString()
+        Log.i(LDKTAG, rawLog)
     }
 }
 
@@ -185,29 +187,22 @@ object LDKBroadcaster : BroadcasterInterface.BroadcasterInterfaceInterface {
 }
 
 fun initializeNetworkGraph(genesisBlockHash: ByteArray, logger: Logger) {
-    val f = File(Global.homeDir + "/" + Global.prefixNetworkGraph)
+    if (Global.router !== null) {
+        Log.i(LDKTAG, "Network graph already initialised")
+    }
+    val f = File(Global.homeDir + "/" + "network-graph.bin")
 
     if (f.exists()) {
-        Log.i(LDKTAG, "Loading network graph from: ${Global.homeDir + "/" + Global.prefixNetworkGraph}")
-        val serializedGraph = File(Global.homeDir + "/" + Global.prefixNetworkGraph).readBytes()
-        val readResult = NetworkGraph.read(serializedGraph, logger)
-        Log.i(LDKTAG, "ReadResult: $readResult")
+        Log.i(LDKTAG, "Loading network graph from: ${f.absolutePath}")
+        (NetworkGraph.read(f.readBytes(), logger) as? Result_NetworkGraphDecodeErrorZ.Result_NetworkGraphDecodeErrorZ_OK)?.let { res ->
+            Log.i(LDKTAG, "Loaded network graph bytes")
 
-        if (readResult is Result_NetworkGraphDecodeErrorZ.Result_NetworkGraphDecodeErrorZ_OK) {
-            Global.router = readResult.res
-            Global.p2pGossipSync = P2PGossipSync.of(readResult.res, Option_AccessZ.none(), logger)
-            Log.i(LDKTAG, "Loaded network graph ok")
-        } else {
-            Log.i(LDKTAG,"Network graph load failed")
-            if (readResult is Result_NetworkGraphDecodeErrorZ.Result_NetworkGraphDecodeErrorZ_Err) {
-                Log.i(LDKTAG, "${readResult.err}")
-            }
-
-            // error, creating from scratch
-            Global.router = NetworkGraph.of(genesisBlockHash.reversedArray(), logger)
+            Global.router = res.res
         }
-    } else {
-        // first run, creating from scratch
+    }
+
+    if (Global.router == null) {
+        Log.i(LDKTAG, "Failed to load cached network graph from disk. Will sync from scratch.")
         Global.router = NetworkGraph.of(genesisBlockHash.reversedArray(), logger)
     }
 }
@@ -215,52 +210,47 @@ fun initializeNetworkGraph(genesisBlockHash: ByteArray, logger: Logger) {
 
 // To create a Persister for our Channel Monitors we need to provide an object that implements the PersistInterface
 // which has 2 functions persist_new_channel & update_persisted_channel
+// Consider return ChannelMonitorUpdateStatus::InProgress for async backups
 object LDKPersister : Persist.PersistInterface {
+    private fun persist(id: OutPoint?, data: ByteArray?) {
+        if(id != null && data != null) {
+            val identifier = "channels/${id.to_channel_id().toHex()}.bin"
+            write(identifier, data)
+        }
+    }
+
     override fun persist_new_channel(
         id: OutPoint?,
         data: ChannelMonitor?,
         updateId: MonitorUpdateId?
     ): ChannelMonitorUpdateStatus? {
         return try {
-            Log.i(LDKTAG, "persist_new_channel")
-            if (data != null) {
-                if (id != null) {
-                    File(
-                        Global.homeDir + "/" + Global.prefixChannelMonitor + id.write()
-                            .toHex() + ".hex"
-                    ).writeText(
-                        data.write().toHex()
-                    )
-                }
+            if (data != null && id != null) {
+                Log.i(LDKTAG, "persist_new_channel: ${id.to_channel_id().toHex()}")
+                persist(id, data.write())
             }
             ChannelMonitorUpdateStatus.LDKChannelMonitorUpdateStatus_Completed
         } catch (e: Exception) {
-            ChannelMonitorUpdateStatus.LDKChannelMonitorUpdateStatus_InProgress
+            Log.i(LDKTAG, "Failed to write to file: ${e.message}")
+            ChannelMonitorUpdateStatus.LDKChannelMonitorUpdateStatus_PermanentFailure
         }
-
-
     }
 
+    // Consider returning ChannelMonitorUpdateStatus::InProgress for async backups
     override fun update_persisted_channel(
         id: OutPoint?,
         update: ChannelMonitorUpdate?,
         data: ChannelMonitor?,
         updateId: MonitorUpdateId
     ): ChannelMonitorUpdateStatus? {
-        Log.i(LDKTAG, "update_persisted_channel")
         return try {
-            if (id != null) {
-                if (update != null) {
-                    File(
-                        Global.homeDir + "/" + Global.prefixChannelMonitor + id.write()
-                            .toHex() + ".hex"
-                    ).writeText(
-                        update.write().toHex()
-                    )
-                }
+            if (data != null && id != null) {
+                Log.i(LDKTAG, "update_persisted_channel: ${id.to_channel_id().toHex()}")
+                persist(id, data.write())
             }
             ChannelMonitorUpdateStatus.LDKChannelMonitorUpdateStatus_Completed
         } catch (e: Exception) {
+            Log.i(LDKTAG, "Failed to write to file: ${e.message}")
             ChannelMonitorUpdateStatus.LDKChannelMonitorUpdateStatus_PermanentFailure
 
         }
@@ -275,30 +265,27 @@ object ChannelManagerEventHandler : ChannelManagerConstructor.EventHandler {
         handleEvent(event)
     }
 
-    override fun persist_manager(channel_manager_bytes: ByteArray?) {
-        Log.i(LDKTAG, "persist_manager")
-        if (channel_manager_bytes != null) {
-            val hex = channel_manager_bytes.toHex()
-            Log.i(LDKTAG, "channel_manager_bytes: $hex")
-            File(Global.homeDir + "/" + Global.prefixChannelManager).writeText(channel_manager_bytes.toHex())
+    override fun persist_manager(channelManagerBytes: ByteArray?) {
+        if (channelManagerBytes != null) {
+            Log.i(LDKTAG, "persist_manager")
+            val identifier = "channel-manager.bin"
+            write(identifier, channelManagerBytes)
         }
     }
 
-    override fun persist_network_graph(network_graph: ByteArray?) {
-        Log.i(LDKTAG, "persist_network_graph")
-        if (Global.prefixNetworkGraph != "" && network_graph !== null) {
-            val hex = network_graph.toHex()
-            Log.i(LDKTAG, "persist_network_graph_bytes: $hex")
-            File(Global.homeDir + "/" + Global.prefixNetworkGraph).writeText(network_graph.toHex())
+    override fun persist_network_graph(networkGraph: ByteArray?) {
+        if (networkGraph !== null) {
+            Log.i(LDKTAG, "persist_network_graph")
+            val identifier = "network-graph.bin"
+            write(identifier, networkGraph)
         }
     }
 
     override fun persist_scorer(scorer: ByteArray?) {
-        Log.i(LDKTAG, "scorer")
-        if (Global.prefixScorer != "" && scorer !== null) {
-            val hex = scorer.toHex()
-            Log.i(LDKTAG, "scorer_bytes: $hex")
-            File(Global.homeDir + "/" + Global.prefixScorer).writeText(scorer.toHex())
+        if (scorer !== null) {
+            Log.i(LDKTAG, "persist_scorer")
+            val identifier = "scorer.bin"
+            write(identifier, scorer)
         }
     }
 }
@@ -308,23 +295,46 @@ object ChannelManagerEventHandler : ChannelManagerConstructor.EventHandler {
 object LDKTxFilter : Filter.FilterInterface {
     override fun register_tx(txid: ByteArray, script_pubkey: ByteArray) {
         Log.i(LDKTAG, "register_tx")
+
+        val txId = txid.reversedArray().toHex()
+        val scriptPubkey = script_pubkey.toHex()
+
         val params = WritableMap()
-        params.putString("txid", txid.reversedArray().toHex())
-        params.putString("script_pubkey", script_pubkey.toHex())
+        params.putString("txid", txId)
+        params.putString("script_pubkey", scriptPubkey)
         storeEvent(Global.homeDir + "/events_register_tx", params)
+
         Global.eventsRegisterTx = Global.eventsRegisterTx.plus(params.toString())
+        Global.relevantTxs.add(WatchedTransaction(txid, script_pubkey))
+
+        Log.i(LDKTAG, Global.relevantTxs.toString())
     }
 
     override fun register_output(output: WatchedOutput) {
         Log.i(LDKTAG, "register_output")
+
+        val index = output._outpoint._index.toString()
+        val scriptPubkey = output._script_pubkey.toHex()
+
         val params = WritableMap()
         val blockHash = output._block_hash
         if (blockHash is ByteArray) {
             params.putString("block_hash", blockHash.toHex())
         }
-        params.putString("index", output._outpoint._index.toString())
-        params.putString("script_pubkey", output._script_pubkey.toHex())
+        params.putString("index", index)
+        params.putString("script_pubkey", scriptPubkey)
+
         storeEvent(Global.homeDir + "/events_register_output", params)
+
         Global.eventsRegisterOutput = Global.eventsRegisterOutput.plus(params.toString())
+        Global.relevantOutputs.add(
+            WatchedOutput.of(
+                output._block_hash,
+                output._outpoint,
+                output._script_pubkey
+            )
+        )
+
+        Log.i(LDKTAG, Global.relevantOutputs.toString())
     }
 }
