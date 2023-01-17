@@ -2,8 +2,6 @@ package com.example.umlandowallet.data
 
 import kotlinx.serialization.Serializable
 
-public class WatchedTransaction(val id: ByteArray, val scriptPubKey: ByteArray)
-
 @Serializable
 data class Tx(
     val txid: String,

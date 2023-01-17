@@ -21,13 +21,12 @@ class AccessImpl: Access {
         val relevantTxIds: Array<ByteArray> =
             relevantTxIdsFromChannelManager + relevantTxIdsFromChainMonitor
 
+        this.syncTransactionConfirmed(relevantTxIds, Global.channelManager!!, Global.chainMonitor!!)
         this.syncTransactionsUnconfirmed(
             relevantTxIds,
             Global.channelManager!!,
             Global.chainMonitor!!
         )
-
-        this.syncTransactionConfirmed(relevantTxIds, Global.channelManager!!, Global.chainMonitor!!)
         this.syncBestBlockConnected(Global.channelManager!!, Global.chainMonitor!!)
 
         Global.channelManagerConstructor!!.chain_sync_completed(
