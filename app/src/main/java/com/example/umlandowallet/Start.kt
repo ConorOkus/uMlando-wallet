@@ -92,6 +92,7 @@ fun start(
     if (!scoreRes.is_ok) {
         Log.i(LDKTAG, "Initialising scoring failed")
     }
+
     val score = (scoreRes as Result_ProbabilisticScorerDecodeErrorZ.Result_ProbabilisticScorerDecodeErrorZ_OK).res.as_Score()
     val scorer = MultiThreadedLockableScore.of(score)
 
@@ -157,8 +158,20 @@ fun start(
 // To create a FeeEstimator we need to provide an object that implements the FeeEstimatorInterface
 // which has 1 function: get_est_sat_per_1000_weight(conf_target: ConfirmationTarget?): Int
 object LDKFeeEstimator : FeeEstimatorInterface {
-    override fun get_est_sat_per_1000_weight(conf_target: ConfirmationTarget?): Int {
-        return Global.feerateFast
+    override fun get_est_sat_per_1000_weight(confirmationTarget: ConfirmationTarget?): Int {
+        if (confirmationTarget == ConfirmationTarget.LDKConfirmationTarget_Background) {
+            return 12500
+        }
+
+        if (confirmationTarget == ConfirmationTarget.LDKConfirmationTarget_Normal) {
+            return 12500
+        }
+
+        if (confirmationTarget == ConfirmationTarget.LDKConfirmationTarget_HighPriority) {
+            return 12500
+        }
+
+        return 12500
     }
 }
 
