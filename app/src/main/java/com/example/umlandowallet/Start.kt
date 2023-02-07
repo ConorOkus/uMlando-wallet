@@ -92,7 +92,8 @@ fun start(
     if (!scoreRes.is_ok) {
         Log.i(LDKTAG, "Initialising scoring failed")
     }
-    val score = (scoreRes as Result_ProbabilisticScorerDecodeErrorZ.Result_ProbabilisticScorerDecodeErrorZ_OK).res.as_Score()
+    val score =
+        (scoreRes as Result_ProbabilisticScorerDecodeErrorZ.Result_ProbabilisticScorerDecodeErrorZ_OK).res.as_Score()
     val scorer = MultiThreadedLockableScore.of(score)
 
     try {
@@ -157,8 +158,20 @@ fun start(
 // To create a FeeEstimator we need to provide an object that implements the FeeEstimatorInterface
 // which has 1 function: get_est_sat_per_1000_weight(conf_target: ConfirmationTarget?): Int
 object LDKFeeEstimator : FeeEstimatorInterface {
-    override fun get_est_sat_per_1000_weight(conf_target: ConfirmationTarget?): Int {
-        return Global.feerateFast
+    override fun get_est_sat_per_1000_weight(confirmationTarget: ConfirmationTarget?): Int {
+        if (confirmationTarget == ConfirmationTarget.LDKConfirmationTarget_Background) {
+            return 12500
+        }
+
+        if (confirmationTarget == ConfirmationTarget.LDKConfirmationTarget_Normal) {
+            return 12500
+        }
+
+        if (confirmationTarget == ConfirmationTarget.LDKConfirmationTarget_HighPriority) {
+            return 12500
+        }
+
+        return 12500
     }
 }
 
@@ -194,7 +207,10 @@ fun initializeNetworkGraph(genesisBlockHash: ByteArray, logger: Logger) {
 
     if (f.exists()) {
         Log.i(LDKTAG, "Loading network graph from: ${f.absolutePath}")
-        (NetworkGraph.read(f.readBytes(), logger) as? Result_NetworkGraphDecodeErrorZ.Result_NetworkGraphDecodeErrorZ_OK)?.let { res ->
+        (NetworkGraph.read(
+            f.readBytes(),
+            logger
+        ) as? Result_NetworkGraphDecodeErrorZ.Result_NetworkGraphDecodeErrorZ_OK)?.let { res ->
             Log.i(LDKTAG, "Loaded network graph bytes")
 
             Global.router = res.res
@@ -213,7 +229,7 @@ fun initializeNetworkGraph(genesisBlockHash: ByteArray, logger: Logger) {
 // Consider return ChannelMonitorUpdateStatus::InProgress for async backups
 object LDKPersister : Persist.PersistInterface {
     private fun persist(id: OutPoint?, data: ByteArray?) {
-        if(id != null && data != null) {
+        if (id != null && data != null) {
             val identifier = "channels/${id.to_channel_id().toHex()}.bin"
             write(identifier, data)
         }
