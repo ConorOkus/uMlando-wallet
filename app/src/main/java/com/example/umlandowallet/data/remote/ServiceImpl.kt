@@ -54,7 +54,7 @@ class ServiceImpl(private val client: HttpClient) : Service {
     override suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int) {
         Log.i(LDKTAG, "LDK: attempting to connect to peer $pubkeyHex")
         try {
-            Global.nioPeerHandler!!.connect(
+            Global.channelManagerConstructor!!.nio_peer_handler!!.connect(
                 pubkeyHex.toByteArray(),
                 InetSocketAddress(hostname, port), 5555
             )

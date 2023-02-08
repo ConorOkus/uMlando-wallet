@@ -4,6 +4,7 @@ import com.example.umlandowallet.data.OnchainWallet
 import org.bitcoindevkit.*
 import org.ldk.structs.ChainMonitor
 import org.ldk.structs.ChannelManager
+import org.ldk.structs.TwoTuple_TxidBlockHashZ
 
 interface Access {
     suspend fun sync(): Unit
@@ -16,13 +17,13 @@ interface Access {
     ): Unit
 
     suspend fun syncTransactionConfirmed(
-        relevantTxIds: Array<ByteArray>,
+        relevantTxIds: Array<TwoTuple_TxidBlockHashZ>,
         channelManager: ChannelManager,
         chainMonitor: ChainMonitor
     ): Unit
 
     suspend fun syncTransactionsUnconfirmed(
-        relevantTxIds: Array<ByteArray>,
+        relevantTxIds: Array<TwoTuple_TxidBlockHashZ>,
         channelManager: ChannelManager,
         chainMonitor: ChainMonitor
     ): Unit

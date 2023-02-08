@@ -108,11 +108,11 @@ fun SendPaymentScreen() {
                 val sendingError = error?.err as? PaymentError.Sending
                 if (sendingError != null) {
                     val paymentAllFailedRetrySafe =
-                        sendingError.sending as? PaymentSendFailure.AllFailedRetrySafe
+                        sendingError.sending as? PaymentSendFailure.AllFailedResendSafe
                     if (paymentAllFailedRetrySafe != null) {
                         Log.i(
                             LDKTAG,
-                            Error(paymentAllFailedRetrySafe.all_failed_retry_safe.map { it.toString() }
+                            Error(paymentAllFailedRetrySafe.all_failed_resend_safe.map { it.toString() }
                                 .toString()).toString()
                         )
                     }

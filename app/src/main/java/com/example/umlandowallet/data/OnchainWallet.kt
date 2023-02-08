@@ -18,18 +18,19 @@ object OnchainWallet {
 
     private fun createOnchainWallet() {
         val mnemonic = loadMnemonic()
-        val descriptorSecretKey = DescriptorSecretKey(Network.REGTEST, Mnemonic.fromString(mnemonic), null)
-        val derivedKey = descriptorSecretKey.derive(DerivationPath("m/84h/1h/0h"))
-        val externalDescriptor = "wpkh(${derivedKey.extend(DerivationPath("m/0")).asString()})"
-        val internalDescriptor = "wpkh(${derivedKey.extend(DerivationPath("m/1")).asString()})"
+        val bip32ExtendedRootKey = DescriptorSecretKey(Network.REGTEST, Mnemonic.fromString(mnemonic), null)
+        val bip84ExternalDescriptor: Descriptor = Descriptor.newBip84(bip32ExtendedRootKey, KeychainKind.EXTERNAL, Network.REGTEST)
+        val bip84InternalDescriptor: Descriptor = Descriptor.newBip84(bip32ExtendedRootKey, KeychainKind.INTERNAL, Network.REGTEST)
+
         val databaseConfig = DatabaseConfig.Memory
 
         onchainWallet = Wallet(
-            internalDescriptor,
-            externalDescriptor,
+            bip84InternalDescriptor,
+            bip84ExternalDescriptor,
             Network.REGTEST,
             databaseConfig,
         )
+
         Log.i(LDKTAG, "Successfully created/restored wallet with mnemonic $mnemonic")
     }
 
@@ -58,15 +59,15 @@ object OnchainWallet {
 
     @OptIn(ExperimentalUnsignedTypes::class)
     fun getLdkEntropy(): ByteArray {
-        val mnemonic: String = loadMnemonic()
-        val bip32RootKey: DescriptorSecretKey = DescriptorSecretKey(
+        val mnemonic = loadMnemonic()
+        val bip32RootKey = DescriptorSecretKey(
             network = Network.REGTEST,
             mnemonic = Mnemonic.fromString(mnemonic),
             password = null,
         )
         val derivationPath = DerivationPath("m/535h")
-        val child: DescriptorSecretKey = bip32RootKey.derive(derivationPath)
-        val entropy: ByteArray = child.secretBytes().toUByteArray().toByteArray()
+        val child = bip32RootKey.derive(derivationPath)
+        val entropy = child.secretBytes().toUByteArray().toByteArray()
 
         Log.i(LDKTAG, "Entropy used for LDK is ${entropy.toHex()}")
         return entropy
@@ -98,20 +99,20 @@ object OnchainWallet {
     }
 
     private fun createBlockchain(): Blockchain {
-        val esploraURL: String = "http://10.0.2.2:3002"
+        val esploraURL = "http://10.0.2.2:3002"
         val blockchainConfig = BlockchainConfig.Esplora(EsploraConfig(esploraURL, null, 5u, 20u, null))
         return Blockchain(blockchainConfig)
     }
 
     private fun loadMnemonic(): String {
-        try {
-            return File(Global.homeDir + "/" + "mnemonic.txt").readText()
+        return try {
+            File(Global.homeDir + "/" + "mnemonic.txt").readText()
         } catch (e: Throwable) {
             // if mnemonic doesn't exist, generate one and save it
             Log.i(LDKTAG, "No mnemonic backup, we'll create a new wallet")
             val mnemonic = Mnemonic(WordCount.WORDS12)
             File(Global.homeDir + "/" + "mnemonic.txt").writeText(mnemonic.asString())
-            return mnemonic.asString()
+            mnemonic.asString()
         }
     }
 
