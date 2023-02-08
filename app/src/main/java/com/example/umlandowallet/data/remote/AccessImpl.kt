@@ -7,19 +7,17 @@ import com.example.umlandowallet.toByteArray
 import com.example.umlandowallet.toHex
 import org.ldk.structs.ChainMonitor
 import org.ldk.structs.ChannelManager
+import org.ldk.structs.TwoTuple_TxidBlockHashZ
 import org.ldk.structs.TwoTuple_usizeTransactionZ
 
 class AccessImpl: Access {
     override suspend fun sync() {
         this.syncWallet(OnchainWallet)
 
-        val relevantTxIdsFromChannelManager: Array<ByteArray> =
-            Global.channelManager!!.as_Confirm()._relevant_txids
-        val relevantTxIdsFromChainMonitor: Array<ByteArray> =
-            Global.chainMonitor!!.as_Confirm()._relevant_txids
+        val relevantTxIdsFromChannelManager = Global.channelManager!!.as_Confirm()._relevant_txids
+        val relevantTxIdsFromChainMonitor = Global.chainMonitor!!.as_Confirm()._relevant_txids
 
-        val relevantTxIds: Array<ByteArray> =
-            relevantTxIdsFromChannelManager + relevantTxIdsFromChainMonitor
+        val relevantTxIds = relevantTxIdsFromChannelManager + relevantTxIdsFromChainMonitor
 
         this.syncTransactionsUnconfirmed(
             relevantTxIds,
@@ -55,7 +53,7 @@ class AccessImpl: Access {
 
 
     override suspend fun syncTransactionConfirmed(
-        relevantTxIds: Array<ByteArray>,
+        relevantTxIds: Array<TwoTuple_TxidBlockHashZ>,
         channelManager: ChannelManager,
         chainMonitor: ChainMonitor
     ) {
@@ -63,7 +61,7 @@ class AccessImpl: Access {
 
         val confirmedTxs = mutableListOf<ConfirmedTx>()
         for (txid in relevantTxIds) {
-            val txId = txid.reversedArray().toHex()
+            val txId = txid._a.reversedArray().toHex()
             val tx = service.getTx(txId)
             if (tx.status.confirmed) {
                 val txHex = service.getTxHex(txId)
@@ -109,14 +107,14 @@ class AccessImpl: Access {
     }
 
     override suspend fun syncTransactionsUnconfirmed(
-        relevantTxIds: Array<ByteArray>,
+        relevantTxIds: Array<TwoTuple_TxidBlockHashZ>,
         channelManager: ChannelManager,
         chainMonitor: ChainMonitor
     ) {
         val service = Service.create()
 
         for (txid in relevantTxIds) {
-            val txId = txid.reversedArray().toHex()
+            val txId = txid._a.reversedArray().toHex()
             val tx: Tx = service.getTx(txId)
             if (tx.status.confirmed) {
                 channelManager.as_Confirm().transaction_unconfirmed(txId.toByteArray())

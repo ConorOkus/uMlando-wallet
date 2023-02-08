@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.umlandowallet.data.OnchainWallet
 import com.example.umlandowallet.utils.LDKTAG
 import org.ldk.structs.*
+import org.ldk.util.UInt128
 import kotlin.random.Random
 
 fun handleEvent(event: Event) {
@@ -36,7 +37,7 @@ fun handleEvent(event: Event) {
 
     if (event is Event.OpenChannelRequest) {
         val params = WritableMap()
-        val userChannelId = Random.nextLong(0, 100)
+        val userChannelId = UInt128(Random.nextLong(0, 100))
 
         params.putString("counterparty_node_id", event.counterparty_node_id.toHex())
         params.putString("temporary_channel_id", event.temporary_channel_id.toHex())

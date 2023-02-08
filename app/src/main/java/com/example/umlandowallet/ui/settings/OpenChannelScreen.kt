@@ -18,6 +18,7 @@ import com.example.umlandowallet.utils.LDKTAG
 import org.ldk.structs.ChannelHandshakeConfig
 import org.ldk.structs.Result__u832APIErrorZ
 import org.ldk.structs.UserConfig
+import org.ldk.util.UInt128
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,7 +68,7 @@ fun createChannel(pubKey: String) {
 
     val amount = 100_000L
     val pushMsat = 1_000L
-    val userId = 42L
+    val userId = UInt128(42L)
 
     // public aka announced channel
     val userConfig = UserConfig.with_default()
