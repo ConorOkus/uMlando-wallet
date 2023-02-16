@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.umlandowallet.R
-import com.example.umlandowallet.data.OnchainWallet
+import com.example.umlandowallet.OnchainWallet
 import com.example.umlandowallet.utils.LDKTAG
 
 @Composable
@@ -120,6 +120,19 @@ fun SettingsScreen(navController: NavController) {
             label = "Send payment",
             onClick = {
                 navController.navigate(Screen.SendPaymentScreen.route) {
+                    navController.graph.startDestinationRoute?.let { route ->
+                        popUpTo(route)
+                    }
+                    launchSingleTop = true
+                }
+            }
+        )
+
+        // Receive payment
+        SettingButton(
+            label = "Receive payment",
+            onClick = {
+                navController.navigate(Screen.ReceivePaymentScreen.route) {
                     navController.graph.startDestinationRoute?.let { route ->
                         popUpTo(route)
                     }

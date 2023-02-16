@@ -1,10 +1,9 @@
-package com.example.umlandowallet
+package com.example.umlandowallet.utils
 
 import android.util.Log
-import com.example.umlandowallet.utils.LDKTAG
+import com.example.umlandowallet.Global
+import com.example.umlandowallet.WritableMap
 import java.io.File
-import java.math.BigInteger
-import java.security.MessageDigest
 import com.google.common.io.BaseEncoding
 
 fun ByteArray.toHex(): String {

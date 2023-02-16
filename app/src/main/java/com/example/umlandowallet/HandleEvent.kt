@@ -1,8 +1,10 @@
 package com.example.umlandowallet
 
 import android.util.Log
-import com.example.umlandowallet.data.OnchainWallet
+import com.example.umlandowallet.Global.channelManager
 import com.example.umlandowallet.utils.LDKTAG
+import com.example.umlandowallet.utils.storeEvent
+import com.example.umlandowallet.utils.toHex
 import org.ldk.structs.*
 import org.ldk.util.UInt128
 import kotlin.random.Random
@@ -50,7 +52,7 @@ fun handleEvent(event: Event) {
         storeEvent("${Global.homeDir}/events_open_channel_request", params)
         Global.eventsFundingGenerationReady = Global.eventsFundingGenerationReady.plus(params.toString())
 
-        Global.channelManager!!.accept_inbound_channel(
+        channelManager!!.accept_inbound_channel(
             event.temporary_channel_id,
             event.counterparty_node_id,
             userChannelId
@@ -97,5 +99,16 @@ fun handleEvent(event: Event) {
 
     if(event is Event.PaymentFailed) {
         Log.i(LDKTAG, "Payment Failed")
+    }
+
+    if(event is Event.PaymentClaimable) {
+        Log.i(LDKTAG, "Event.PaymentClaimable")
+        if (event.payment_hash != null) {
+            channelManager?.claim_funds(event.payment_hash)
+        }
+    }
+
+    if(event is Event.PaymentClaimed) {
+        Log.i(LDKTAG, "Claimed Payment: ${event.payment_hash}")
     }
 }

@@ -21,8 +21,6 @@ interface Service {
 
     suspend fun getTxHex(txid: String): String
 
-//    suspend fun getTxStatus(txid: String) : TxStatus
-
     suspend fun getHeader(hash: String) : String
 
     suspend fun getMerkleProof(txid: String) : MerkleProof
