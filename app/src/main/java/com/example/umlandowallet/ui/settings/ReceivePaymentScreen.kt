@@ -27,15 +27,13 @@ import org.ldk.structs.Result_InvoiceSignOrCreationErrorZ
 import org.ldk.structs.Result_InvoiceSignOrCreationErrorZ.Result_InvoiceSignOrCreationErrorZ_OK
 import org.ldk.structs.UtilMethods
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReceivePaymentScreen() {
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
     val logger: Logger = Logger.new_impl(LDKLogger)
 
     val description =  "coffee"
-    val amtMsat = 100_000_00L
+    val amtMsat: Long = 200000000
     val invoice: Result_InvoiceSignOrCreationErrorZ = UtilMethods.create_invoice_from_channelmanager(
         channelManager,
         keysManager!!.as_KeysInterface(),

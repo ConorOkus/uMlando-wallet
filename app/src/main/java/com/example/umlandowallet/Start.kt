@@ -2,7 +2,9 @@ package com.example.umlandowallet
 
 import android.util.Log
 import com.example.umlandowallet.data.WatchedTransaction
+import com.example.umlandowallet.data.remote.AccessImpl
 import com.example.umlandowallet.data.remote.Service
+import com.example.umlandowallet.ui.settings.ListItem
 import com.example.umlandowallet.utils.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -111,13 +113,26 @@ fun start(
                 logger
             )
 
+
             Global.channelManagerConstructor = channelManagerConstructor
             Global.channelManager = channelManagerConstructor.channel_manager
-            Global.peerManager = channelManagerConstructor.peer_manager
             Global.nioPeerHandler = channelManagerConstructor.nio_peer_handler
+            Global.peerManager = channelManagerConstructor.peer_manager
             Global.router = channelManagerConstructor.net_graph
             Global.invoicePayer = channelManagerConstructor.payer
             Global.scorer = scorer
+
+            channelManagerConstructor.chain_sync_completed(
+                ChannelManagerEventHandler,
+                scorer
+            )
+
+            // If you want to communicate from your computer to your emulator,
+            // the IP address to use is 127.0.0.1 and you need to do some port forwarding
+            // using ADB in command line e.g adb forward tcp:9777 tcp:9777
+            // If you want to do the reverse use 10.0.2.2 instead of localhost
+
+            channelManagerConstructor.nio_peer_handler.bind_listener(InetSocketAddress("127.0.0.1", 9777))
         } else {
             // fresh start
             val channelManagerConstructor = ChannelManagerConstructor(
@@ -145,10 +160,6 @@ fun start(
                 scorer
             )
 
-            // If you want to communicate from your computer to your emulator,
-            // the IP address to use is 127.0.0.1 and you need to do some port forwarding
-            // using ADB in command line e.g adb forward tcp:9777 tcp:9777
-            // If you want to do the reverse use 10.0.2.2 instead of localhost
             channelManagerConstructor.nio_peer_handler.bind_listener(InetSocketAddress("127.0.0.1", 9777))
         }
     } catch (e: Exception) {

@@ -67,8 +67,8 @@ fun OpenChannelScreen() {
 fun createChannel(pubKey: String) {
     temporaryChannelId = null
 
-    val amount = 100_000_0L
-    val pushMsat = 1_000L
+    val amount: Long = 10000000
+    val pushMsat: Long = 10000
     val userId = UInt128(42L)
 
     // public aka announced channel
