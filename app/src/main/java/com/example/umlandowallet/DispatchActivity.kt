@@ -5,11 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.example.umlandowallet.utils.LDKTAG
-import io.ktor.utils.io.core.*
-import okio.utf8Size
 import java.io.File
-import java.nio.charset.Charset
-import kotlin.text.toByteArray
 
 class DispatchActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
