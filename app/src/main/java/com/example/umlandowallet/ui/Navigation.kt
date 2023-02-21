@@ -171,6 +171,23 @@ fun Navigation(
             }
         ) { SendPaymentScreen() }
 
+        // Receive Payment
+        composable(
+            route = Screen.ReceivePaymentScreen.route,
+            enterTransition = {
+                slideIntoContainer(AnimatedContentScope.SlideDirection.Up, animationSpec = tween(animationDuration))
+            },
+            popEnterTransition = {
+                slideIntoContainer(AnimatedContentScope.SlideDirection.Up, animationSpec = tween(animationDuration))
+            },
+            exitTransition = {
+                slideOutOfContainer(AnimatedContentScope.SlideDirection.Down, animationSpec = tween(animationDuration))
+            },
+            popExitTransition = {
+                slideOutOfContainer(AnimatedContentScope.SlideDirection.Down, animationSpec = tween(animationDuration))
+            }
+        ) { ReceivePaymentScreen() }
+
         // Recovery phrase
         composable(
             route = Screen.RecoveryPhraseScreen.route,

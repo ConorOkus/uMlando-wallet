@@ -1,9 +1,8 @@
-package com.example.umlandowallet.data
+package com.example.umlandowallet
 
 import android.util.Log
-import com.example.umlandowallet.Global
-import com.example.umlandowallet.toHex
 import com.example.umlandowallet.utils.LDKTAG
+import com.example.umlandowallet.utils.toHex
 import org.bitcoindevkit.*
 import java.io.File
 

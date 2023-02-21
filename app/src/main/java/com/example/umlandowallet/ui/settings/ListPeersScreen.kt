@@ -8,8 +8,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.umlandowallet.Global
-import com.example.umlandowallet.toHex
+import com.example.umlandowallet.Global.peerManager
+import com.example.umlandowallet.utils.toHex
 
 @Composable
 fun ListPeersScreen() {
@@ -27,7 +27,7 @@ fun ListPeersScreen() {
                 .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
         )
 
-        val peers = Global.peerManager!!.get_peer_node_ids()
+        val peers = peerManager!!._peer_node_ids
         val peersList: MutableList<String> = mutableListOf()
         peers.forEach {
             peersList.add(it.toHex())

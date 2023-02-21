@@ -4,7 +4,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import com.example.umlandowallet.data.OnchainWallet
 import com.example.umlandowallet.utils.LDKTAG
 import java.io.File
 

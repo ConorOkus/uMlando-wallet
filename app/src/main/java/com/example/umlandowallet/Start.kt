@@ -2,8 +2,10 @@ package com.example.umlandowallet
 
 import android.util.Log
 import com.example.umlandowallet.data.WatchedTransaction
+import com.example.umlandowallet.data.remote.AccessImpl
 import com.example.umlandowallet.data.remote.Service
-import com.example.umlandowallet.utils.LDKTAG
+import com.example.umlandowallet.ui.settings.ListItem
+import com.example.umlandowallet.utils.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -80,7 +82,6 @@ fun start(
 
     val channelHandshakeLimits = ChannelHandshakeLimits.with_default()
     channelHandshakeLimits._max_minimum_depth = 1
-    channelHandshakeLimits._force_announced_channel_preference = false
     userConfig._channel_handshake_limits = channelHandshakeLimits
 
     val params = ProbabilisticScoringParameters.with_default()
@@ -99,7 +100,7 @@ fun start(
     try {
         if (serializedChannelManager != null) {
             // loading from disk (restarting)
-            Global.channelManagerConstructor = ChannelManagerConstructor(
+            val channelManagerConstructor = ChannelManagerConstructor(
                 serializedChannelManager,
                 serializedChannelMonitors,
                 userConfig,
@@ -112,15 +113,29 @@ fun start(
                 logger
             )
 
-            Global.channelManager = Global.channelManagerConstructor!!.channel_manager
-            Global.peerManager = Global.channelManagerConstructor!!.peer_manager
-            Global.nioPeerHandler = Global.channelManagerConstructor!!.nio_peer_handler
-            Global.router = Global.channelManagerConstructor!!.net_graph
-            Global.invoicePayer = Global.channelManagerConstructor!!.payer
+
+            Global.channelManagerConstructor = channelManagerConstructor
+            Global.channelManager = channelManagerConstructor.channel_manager
+            Global.nioPeerHandler = channelManagerConstructor.nio_peer_handler
+            Global.peerManager = channelManagerConstructor.peer_manager
+            Global.router = channelManagerConstructor.net_graph
+            Global.invoicePayer = channelManagerConstructor.payer
             Global.scorer = scorer
+
+            channelManagerConstructor.chain_sync_completed(
+                ChannelManagerEventHandler,
+                scorer
+            )
+
+            // If you want to communicate from your computer to your emulator,
+            // the IP address to use is 127.0.0.1 and you need to do some port forwarding
+            // using ADB in command line e.g adb forward tcp:9777 tcp:9777
+            // If you want to do the reverse use 10.0.2.2 instead of localhost
+
+            channelManagerConstructor.nio_peer_handler.bind_listener(InetSocketAddress("127.0.0.1", 9777))
         } else {
             // fresh start
-            Global.channelManagerConstructor = ChannelManagerConstructor(
+            val channelManagerConstructor = ChannelManagerConstructor(
                 Network.LDKNetwork_Regtest,
                 userConfig,
                 latestBlockHash.toByteArray(),
@@ -133,23 +148,20 @@ fun start(
                 logger
             )
 
-            Global.channelManager = Global.channelManagerConstructor!!.channel_manager
-            Global.peerManager = Global.channelManagerConstructor!!.peer_manager
-            Global.nioPeerHandler = Global.channelManagerConstructor!!.nio_peer_handler
-            Global.router = Global.channelManagerConstructor!!.net_graph
+            Global.channelManagerConstructor = channelManagerConstructor
+            Global.channelManager = channelManagerConstructor.channel_manager
+            Global.peerManager = channelManagerConstructor.peer_manager
+            Global.nioPeerHandler = channelManagerConstructor.nio_peer_handler
+            Global.router = channelManagerConstructor.net_graph
             Global.scorer = scorer
-            Global.invoicePayer = Global.channelManagerConstructor!!.payer
-            Global.channelManagerConstructor!!.chain_sync_completed(
+            Global.invoicePayer = channelManagerConstructor.payer
+            channelManagerConstructor.chain_sync_completed(
                 ChannelManagerEventHandler,
                 scorer
             )
-        }
 
-        // If you want to communicate from your computer to your emulator,
-        // the IP address to use is 127.0.0.1 and you need to do some port forwarding
-        // using ADB in command line e.g adb forward tcp:9777 tcp:9777
-        // If you want to do the reverse use 10.0.2.2 instead of localhost
-        Global.nioPeerHandler!!.bind_listener(InetSocketAddress("127.0.0.1", 9777))
+            channelManagerConstructor.nio_peer_handler.bind_listener(InetSocketAddress("127.0.0.1", 9777))
+        }
     } catch (e: Exception) {
         Log.i(LDKTAG, "LDK: can't start, ${e.message}")
     }

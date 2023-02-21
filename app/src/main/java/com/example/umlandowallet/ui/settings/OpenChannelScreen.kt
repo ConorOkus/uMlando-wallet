@@ -13,7 +13,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.umlandowallet.Global
-import com.example.umlandowallet.toByteArray
+import com.example.umlandowallet.Global.channelManager
+import com.example.umlandowallet.Global.temporaryChannelId
+import com.example.umlandowallet.utils.toByteArray
 import com.example.umlandowallet.utils.LDKTAG
 import org.ldk.structs.ChannelHandshakeConfig
 import org.ldk.structs.Result__u832APIErrorZ
@@ -28,7 +30,6 @@ fun OpenChannelScreen() {
     }
 
     Column(
-        // verticalArrangement = Arrangement.Center,
         modifier = Modifier
             .fillMaxSize()
             .padding(top = 48.dp)
@@ -64,10 +65,10 @@ fun OpenChannelScreen() {
 }
 
 fun createChannel(pubKey: String) {
-    Global.temporaryChannelId = null
+    temporaryChannelId = null
 
-    val amount = 100_000L
-    val pushMsat = 1_000L
+    val amount: Long = 10000000
+    val pushMsat: Long = 10000
     val userId = UInt128(42L)
 
     // public aka announced channel
@@ -78,7 +79,7 @@ fun createChannel(pubKey: String) {
     channelHandshakeConfig._announced_channel = false
     userConfig._channel_handshake_config = channelHandshakeConfig
 
-    val createChannelResult = Global.channelManager!!.create_channel(
+    val createChannelResult = channelManager!!.create_channel(
         pubKey.toByteArray(), amount, pushMsat, userId, userConfig
     )
 

@@ -1,10 +1,9 @@
 package com.example.umlandowallet.data.remote
 
-import com.example.umlandowallet.ChannelManagerEventHandler
-import com.example.umlandowallet.Global
+import com.example.umlandowallet.*
 import com.example.umlandowallet.data.*
-import com.example.umlandowallet.toByteArray
-import com.example.umlandowallet.toHex
+import com.example.umlandowallet.utils.toByteArray
+import com.example.umlandowallet.utils.toHex
 import org.ldk.structs.ChainMonitor
 import org.ldk.structs.ChannelManager
 import org.ldk.structs.TwoTuple_TxidBlockHashZ
@@ -86,7 +85,7 @@ class AccessImpl: Access {
                 cTx.block_header.toByteArray(),
                 arrayOf<TwoTuple_usizeTransactionZ>(
                     TwoTuple_usizeTransactionZ.of(
-                        cTx.block_height.toLong(),
+                        cTx.merkle_proof_pos.toLong(),
                         cTx.tx
                     )
                 ),
@@ -97,7 +96,7 @@ class AccessImpl: Access {
                 cTx.block_header.toByteArray(),
                 arrayOf<TwoTuple_usizeTransactionZ>(
                     TwoTuple_usizeTransactionZ.of(
-                        cTx.block_height.toLong(),
+                        cTx.merkle_proof_pos.toLong(),
                         cTx.tx
                     )
                 ),

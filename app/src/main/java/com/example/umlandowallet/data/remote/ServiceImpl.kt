@@ -4,9 +4,8 @@ import android.util.Log
 import com.example.umlandowallet.Global
 import com.example.umlandowallet.data.MerkleProof
 import com.example.umlandowallet.data.Tx
-import com.example.umlandowallet.data.TxStatus
-import com.example.umlandowallet.toByteArray
-import com.example.umlandowallet.toHex
+import com.example.umlandowallet.utils.toByteArray
+import com.example.umlandowallet.utils.toHex
 import com.example.umlandowallet.utils.LDKTAG
 import io.ktor.client.*
 import io.ktor.client.call.*

@@ -1,25 +1,19 @@
 package com.example.umlandowallet.ui.settings
 
-import androidx.compose.foundation.background
+import android.util.Log
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.umlandowallet.Global
-import com.example.umlandowallet.toByteArray
-import com.example.umlandowallet.toHex
-import com.example.umlandowallet.ui.Screen
+import com.example.umlandowallet.utils.LDKTAG
+import com.example.umlandowallet.utils.toHex
 import org.ldk.structs.*
-import java.time.temporal.TemporalAmount
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,20 +49,16 @@ fun ListChannelsScreen() {
                 usableChannels.forEach { channel ->
                     val status = channel._is_channel_ready
 
-                    var balance = 0L
-                    balance = if (channel._outbound_capacity_msat == 0L) {
-                        0L
-                    } else {
-                        channel._outbound_capacity_msat / channel._balance_msat
-                    }
                     val nodeId = channel._counterparty._node_id.toHex()
                     val sendAmount = channel._outbound_capacity_msat / 1000
                     val receiveAmount = channel._inbound_capacity_msat / 1000
+                    val progress: Double = receiveAmount.toDouble() / (sendAmount.toDouble() + receiveAmount.toDouble())
+                    Log.i(LDKTAG, "Progress update: $progress with $sendAmount and $receiveAmount")
 
                     ListItem(
                         status,
                         nodeId,
-                        balance.toFloat(),
+                        progress.toFloat(),
                         sendAmount.toString(),
                         receiveAmount.toString()
                     )

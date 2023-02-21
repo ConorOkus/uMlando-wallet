@@ -9,7 +9,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.umlandowallet.Global
-import com.example.umlandowallet.toHex
+import com.example.umlandowallet.utils.toHex
 
 @Composable
 fun NodeIdScreen() {
