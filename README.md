@@ -1,7 +1,7 @@
 # uMlando-wallet
 Lightning Dev Kit Android Demo Wallet 
 
-This project uses a .aar package for the Android platforms that provide language bindings for the [LDK](https://lightningdevkit.org/). The Kotlin 
+This project uses a .aar package for the Android platforms that provide language bindings for [LDK](https://lightningdevkit.org/). The Kotlin 
 language bindings are created by the [ldk-garbagecollected](https://github.com/lightningdevkit/ldk-garbagecollected) project and the latest release can be found
 [here](https://github.com/lightningdevkit/ldk-garbagecollected/releases).
 
