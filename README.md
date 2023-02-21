@@ -35,7 +35,7 @@ _Note: i686 builds are not included in aars in order to preserve space - there a
 * [x] Open Channel
 * [x] List Channels
 * [x] Send payment
-* [ ] Receive payment 
+* [x] Receive payment 
 * [ ] Close channel
 
 
