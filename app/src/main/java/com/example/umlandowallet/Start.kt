@@ -2,20 +2,25 @@ package com.example.umlandowallet
 
 import android.util.Log
 import com.example.umlandowallet.data.WatchedTransaction
-import com.example.umlandowallet.data.remote.AccessImpl
 import com.example.umlandowallet.data.remote.Service
-import com.example.umlandowallet.ui.settings.ListItem
 import com.example.umlandowallet.utils.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.bitcoindevkit.Address
+import org.bitcoindevkit.Script
+import org.bitcoindevkit.Transaction
 import org.ldk.batteries.ChannelManagerConstructor
 import org.ldk.enums.ChannelMonitorUpdateStatus
 import org.ldk.enums.ConfirmationTarget
 import org.ldk.enums.Network
+import org.ldk.enums.Recipient
 import org.ldk.structs.*
 import org.ldk.structs.FeeEstimator.FeeEstimatorInterface
 import org.ldk.structs.Logger.LoggerInterface
+import org.ldk.structs.KeysInterface.KeysInterfaceInterface
+import org.ldk.util.UInt128
+import org.ldk.util.UInt5
 import java.io.File
 import java.net.InetSocketAddress
 
@@ -58,7 +63,6 @@ fun start(
     // Monitor the chain for lighting transactions that are relevant to our
     // node, and broadcasting force close transactions if need be
     Global.chainMonitor = ChainMonitor.of(filter, txBroadcaster, logger, feeEstimator, persister)
-
 
     // Providing keys for signing lightning transactions
     Global.keysManager = KeysManager.of(
@@ -196,16 +200,77 @@ object LDKLogger : LoggerInterface {
     }
 }
 
+object LDKKeysManager : KeysInterfaceInterface {
+
+    override fun get_node_secret(recipient: Recipient?): Result_SecretKeyNoneZ {
+        return get_node_secret(recipient)
+    }
+
+    override fun get_node_id(recipient: Recipient?): Result_PublicKeyNoneZ {
+        return get_node_id(recipient)
+    }
+
+    override fun ecdh(
+        recipient: Recipient?,
+        byteArray: ByteArray?,
+        option_scalar: Option_ScalarZ?
+    ): Result_SharedSecretNoneZ {
+        return ecdh(recipient, byteArray, option_scalar)
+    }
+
+    override fun get_destination_script(): ByteArray {
+        val address = Address(OnchainWallet.getNewAddress())
+
+        return convertToByteArray(address.scriptPubkey())
+    }
+
+    override fun get_shutdown_scriptpubkey(): ShutdownScript {
+        val address = Address(OnchainWallet.getNewAddress())
+
+        return ShutdownScript.new_p2wsh(convertToByteArray(address))
+    }
+
+    override fun generate_channel_keys_id(p0: Boolean, p1: Long, p2: UInt128?): ByteArray {
+        return generate_channel_keys_id(p0, p1, p2)
+    }
+
+    override fun derive_channel_signer(p0: Long, p1: ByteArray?): Sign {
+        return derive_channel_signer(p0, p1)
+    }
+
+    override fun get_secure_random_bytes(): ByteArray {
+        return _secure_random_bytes
+    }
+
+    override fun read_chan_signer(p0: ByteArray?): Result_SignDecodeErrorZ {
+        return read_chan_signer(p0)
+    }
+
+    override fun sign_invoice(
+        p0: ByteArray?,
+        p1: Array<out UInt5>?,
+        p2: Recipient?
+    ): Result_RecoverableSignatureNoneZ {
+        return  sign_invoice(p0, p1, p2)
+    }
+
+    override fun get_inbound_payment_key_material(): ByteArray {
+        return _inbound_payment_key_material
+    }
+
+}
+
 // To create a transaction broadcaster we need provide an object that implements the BroadcasterInterface
 // which has 1 function broadcast_transaction(tx: ByteArray?)
 object LDKBroadcaster : BroadcasterInterface.BroadcasterInterfaceInterface {
     override fun broadcast_transaction(tx: ByteArray?): Unit {
-        val service = Service.create()
-
         tx?.let {
             CoroutineScope(Dispatchers.IO).launch {
-                val txid = service.broadcastTx(tx)
-                Log.i(LDKTAG, "We've broadcast a transaction with txid $txid")
+                val uByteArray = UByteArray(tx.size) { tx[it].toUByte() }
+                val transaction = Transaction(uByteArray.toList())
+
+                OnchainWallet.broadcastRawTx(transaction)
+                Log.i(LDKTAG, "The raw transaction broadcast is: ${tx.toHex()}")
             }
         } ?: throw(IllegalStateException("Broadcaster attempted to broadcast a null transaction"))
     }

@@ -34,7 +34,7 @@ object OnchainWallet {
     }
 
     fun getNewAddress(): String {
-        return onchainWallet.getAddress(AddressIndex.NEW).address
+        return onchainWallet.getAddress(AddressIndex.New).address
     }
 
     fun getBalance(): String {
@@ -73,7 +73,7 @@ object OnchainWallet {
     }
 
     @OptIn(ExperimentalUnsignedTypes::class)
-    fun buildFundingTx(value: Long, script: ByteArray): ByteArray {
+    fun buildFundingTx(value: Long, script: ByteArray): Transaction {
         sync()
         val scriptListUByte: List<UByte> = script.toUByteArray().asList()
         val outputScript = Script(scriptListUByte)
@@ -82,9 +82,9 @@ object OnchainWallet {
             .feeRate(4.0F)
             .finish(onchainWallet)
         sign(psbt)
-        val rawTx = psbt.extractTx().toUByteArray().toByteArray()
+        val rawTx = psbt.extractTx().serialize().toUByteArray().toByteArray()
         Log.i(LDKTAG, "The raw funding tx is ${rawTx.toHex()}")
-        return rawTx
+        return psbt.extractTx()
     }
 
     private fun sign(psbt: PartiallySignedTransaction) {
@@ -93,8 +93,15 @@ object OnchainWallet {
 
     fun broadcast(signedPsbt: PartiallySignedTransaction): String {
         val blockchain = createBlockchain()
-        blockchain.broadcast(signedPsbt)
+        blockchain.broadcast(signedPsbt.extractTx())
         return signedPsbt.txid()
+    }
+
+    fun broadcastRawTx(tx: Transaction) {
+        val blockchain = createBlockchain()
+        blockchain.broadcast(tx)
+        // Should expose txid
+        Log.i(LDKTAG, "The raw tx is ${tx.serialize().toUByteArray().toByteArray().toHex()}")
     }
 
     private fun createBlockchain(): Blockchain {

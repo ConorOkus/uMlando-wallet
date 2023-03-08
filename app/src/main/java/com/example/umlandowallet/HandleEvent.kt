@@ -29,10 +29,10 @@ fun handleEvent(event: Event) {
 
             val rawTx = OnchainWallet.buildFundingTx(event.channel_value_satoshis, event.output_script)
 
-            Global.channelManager!!.funding_transaction_generated(
+            channelManager!!.funding_transaction_generated(
                 event.temporary_channel_id,
                 event.counterparty_node_id,
-                rawTx
+                rawTx.serialize().toUByteArray().toByteArray()
             )
         }
     }
