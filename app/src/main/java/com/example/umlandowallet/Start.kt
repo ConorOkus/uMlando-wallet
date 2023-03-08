@@ -47,7 +47,7 @@ fun start(
     val txBroadcaster: BroadcasterInterface = BroadcasterInterface.new_impl(LDKBroadcaster)
 
     // Optional: Here we initialize the NetworkGraph so LDK does path finding and provides routes for us
-    val network: Network = Network.LDKNetwork_Regtest
+    val network: Network = Network.LDKNetwork_Testnet
     val genesisBlock: BestBlock = BestBlock.from_genesis(network)
     val genesisBlockHash: ByteArray = genesisBlock.block_hash()
 
@@ -140,7 +140,7 @@ fun start(
         } else {
             // fresh start
             val channelManagerConstructor = ChannelManagerConstructor(
-                Network.LDKNetwork_Regtest,
+                Network.LDKNetwork_Testnet,
                 userConfig,
                 latestBlockHash.toByteArray(),
                 latestBlockHeight,

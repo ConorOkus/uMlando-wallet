@@ -23,6 +23,11 @@ fun ConnectPeerScreen() {
     var pubKey by remember {
         mutableStateOf("")
     }
+
+    var host by remember {
+        mutableStateOf("")
+    }
+
     var port by remember {
         mutableStateOf("")
     }
@@ -54,6 +59,16 @@ fun ConnectPeerScreen() {
                 .padding(horizontal = 24.dp)
         )
         TextField(
+            value = host,
+            onValueChange = { host = it },
+            placeholder = {
+                Text("Host")
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+        )
+        TextField(
             value = port,
             onValueChange = { port = it },
             placeholder = {
@@ -65,7 +80,7 @@ fun ConnectPeerScreen() {
         )
         Button(
             onClick = {
-                val host = "10.0.2.2"
+                // val host = "10.0.2.2"
 
                 CoroutineScope(Dispatchers.IO).launch {
                     service.connectPeer(pubKey, host, port.toInt())

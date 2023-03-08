@@ -6,7 +6,7 @@ import com.example.umlandowallet.utils.toHex
 import org.bitcoindevkit.*
 import java.io.File
 
-// The onchain wallet is currently always in regtest mode
+// The onchain wallet is currently always in testnet mode
 object OnchainWallet {
     private lateinit var onchainWallet: Wallet
     private val blockchain: Blockchain = createBlockchain()
@@ -17,16 +17,16 @@ object OnchainWallet {
 
     private fun createOnchainWallet() {
         val mnemonic = loadMnemonic()
-        val bip32ExtendedRootKey = DescriptorSecretKey(Network.REGTEST, Mnemonic.fromString(mnemonic), null)
-        val bip84ExternalDescriptor: Descriptor = Descriptor.newBip84(bip32ExtendedRootKey, KeychainKind.EXTERNAL, Network.REGTEST)
-        val bip84InternalDescriptor: Descriptor = Descriptor.newBip84(bip32ExtendedRootKey, KeychainKind.INTERNAL, Network.REGTEST)
+        val bip32ExtendedRootKey = DescriptorSecretKey(Network.TESTNET, Mnemonic.fromString(mnemonic), null)
+        val bip84ExternalDescriptor: Descriptor = Descriptor.newBip84(bip32ExtendedRootKey, KeychainKind.EXTERNAL, Network.TESTNET)
+        val bip84InternalDescriptor: Descriptor = Descriptor.newBip84(bip32ExtendedRootKey, KeychainKind.INTERNAL, Network.TESTNET)
 
         val databaseConfig = DatabaseConfig.Memory
 
         onchainWallet = Wallet(
             bip84InternalDescriptor,
             bip84ExternalDescriptor,
-            Network.REGTEST,
+            Network.TESTNET,
             databaseConfig,
         )
 
@@ -60,7 +60,7 @@ object OnchainWallet {
     fun getLdkEntropy(): ByteArray {
         val mnemonic = loadMnemonic()
         val bip32RootKey = DescriptorSecretKey(
-            network = Network.REGTEST,
+            network = Network.TESTNET,
             mnemonic = Mnemonic.fromString(mnemonic),
             password = null,
         )
@@ -105,7 +105,7 @@ object OnchainWallet {
     }
 
     private fun createBlockchain(): Blockchain {
-        val esploraURL = "http://10.0.2.2:3002"
+        val esploraURL = "https://blockstream.info/testnet/api/"
         val blockchainConfig = BlockchainConfig.Esplora(EsploraConfig(esploraURL, null, 5u, 20u, null))
         return Blockchain(blockchainConfig)
     }
