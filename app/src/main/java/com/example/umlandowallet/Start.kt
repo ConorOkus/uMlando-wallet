@@ -200,70 +200,10 @@ object LDKLogger : LoggerInterface {
     }
 }
 
-object LDKKeysManager : KeysInterfaceInterface {
-
-    override fun get_node_secret(recipient: Recipient?): Result_SecretKeyNoneZ {
-        return get_node_secret(recipient)
-    }
-
-    override fun get_node_id(recipient: Recipient?): Result_PublicKeyNoneZ {
-        return get_node_id(recipient)
-    }
-
-    override fun ecdh(
-        recipient: Recipient?,
-        byteArray: ByteArray?,
-        option_scalar: Option_ScalarZ?
-    ): Result_SharedSecretNoneZ {
-        return ecdh(recipient, byteArray, option_scalar)
-    }
-
-    override fun get_destination_script(): ByteArray {
-        val address = Address(OnchainWallet.getNewAddress())
-
-        return convertToByteArray(address.scriptPubkey())
-    }
-
-    override fun get_shutdown_scriptpubkey(): ShutdownScript {
-        val address = Address(OnchainWallet.getNewAddress())
-
-        return ShutdownScript.new_p2wsh(convertToByteArray(address))
-    }
-
-    override fun generate_channel_keys_id(p0: Boolean, p1: Long, p2: UInt128?): ByteArray {
-        return generate_channel_keys_id(p0, p1, p2)
-    }
-
-    override fun derive_channel_signer(p0: Long, p1: ByteArray?): Sign {
-        return derive_channel_signer(p0, p1)
-    }
-
-    override fun get_secure_random_bytes(): ByteArray {
-        return _secure_random_bytes
-    }
-
-    override fun read_chan_signer(p0: ByteArray?): Result_SignDecodeErrorZ {
-        return read_chan_signer(p0)
-    }
-
-    override fun sign_invoice(
-        p0: ByteArray?,
-        p1: Array<out UInt5>?,
-        p2: Recipient?
-    ): Result_RecoverableSignatureNoneZ {
-        return  sign_invoice(p0, p1, p2)
-    }
-
-    override fun get_inbound_payment_key_material(): ByteArray {
-        return _inbound_payment_key_material
-    }
-
-}
-
 // To create a transaction broadcaster we need provide an object that implements the BroadcasterInterface
 // which has 1 function broadcast_transaction(tx: ByteArray?)
 object LDKBroadcaster : BroadcasterInterface.BroadcasterInterfaceInterface {
-    override fun broadcast_transaction(tx: ByteArray?): Unit {
+    override fun broadcast_transaction(tx: ByteArray?) {
         tx?.let {
             CoroutineScope(Dispatchers.IO).launch {
                 val uByteArray = UByteArray(tx.size) { tx[it].toUByte() }
