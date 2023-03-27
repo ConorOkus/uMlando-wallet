@@ -2,13 +2,12 @@ package com.example.umlandowallet
 
 import android.util.Log
 import com.example.umlandowallet.data.WatchedTransaction
-import com.example.umlandowallet.data.remote.Service
 import com.example.umlandowallet.utils.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.bitcoindevkit.Address
-import org.bitcoindevkit.Script
+//import org.bitcoindevkit.Payload
 import org.bitcoindevkit.Transaction
 import org.ldk.batteries.ChannelManagerConstructor
 import org.ldk.enums.ChannelMonitorUpdateStatus
@@ -18,9 +17,9 @@ import org.ldk.enums.Recipient
 import org.ldk.structs.*
 import org.ldk.structs.FeeEstimator.FeeEstimatorInterface
 import org.ldk.structs.Logger.LoggerInterface
-import org.ldk.structs.KeysInterface.KeysInterfaceInterface
 import org.ldk.util.UInt128
 import org.ldk.util.UInt5
+import org.ldk.util.WitnessVersion
 import java.io.File
 import java.net.InetSocketAddress
 
@@ -48,7 +47,7 @@ fun start(
 
     // Optional: Here we initialize the NetworkGraph so LDK does path finding and provides routes for us
     val network: Network = Network.LDKNetwork_Regtest
-    val genesisBlock: BestBlock = BestBlock.from_genesis(network)
+    val genesisBlock: BestBlock = BestBlock.from_network(network)
     val genesisBlockHash: ByteArray = genesisBlock.block_hash()
 
     initializeNetworkGraph(genesisBlockHash, logger)
@@ -63,6 +62,9 @@ fun start(
     // Monitor the chain for lighting transactions that are relevant to our
     // node, and broadcasting force close transactions if need be
     Global.chainMonitor = ChainMonitor.of(filter, txBroadcaster, logger, feeEstimator, persister)
+
+    // Create a new instance of the NodeSigner
+    val nodeSigner = NodeSigner.new_impl(LDKNodeSigner)
 
     // Providing keys for signing lightning transactions
     Global.keysManager = KeysManager.of(
@@ -90,16 +92,6 @@ fun start(
 
     val params = ProbabilisticScoringParameters.with_default()
     val defaultScorer = ProbabilisticScorer.of(params, Global.router, logger)
-    val scoreRes = ProbabilisticScorer.read(
-        defaultScorer.write(), params, Global.router,
-        logger
-    )
-    if (!scoreRes.is_ok) {
-        Log.i(LDKTAG, "Initialising scoring failed")
-    }
-
-    val score = (scoreRes as Result_ProbabilisticScorerDecodeErrorZ.Result_ProbabilisticScorerDecodeErrorZ_OK).res.as_Score()
-    val scorer = MultiThreadedLockableScore.of(score)
 
     try {
         if (serializedChannelManager != null) {
@@ -108,11 +100,14 @@ fun start(
                 serializedChannelManager,
                 serializedChannelMonitors,
                 userConfig,
-                Global.keysManager?.as_KeysInterface(),
+                Global.keysManager,
                 feeEstimator,
                 Global.chainMonitor,
                 Global.txFilter,
                 Global.router!!.write(),
+                ProbabilisticScoringParameters.with_default(),
+                defaultScorer.write(),
+                null,
                 txBroadcaster,
                 logger
             )
@@ -123,12 +118,10 @@ fun start(
             Global.nioPeerHandler = channelManagerConstructor.nio_peer_handler
             Global.peerManager = channelManagerConstructor.peer_manager
             Global.router = channelManagerConstructor.net_graph
-            Global.invoicePayer = channelManagerConstructor.payer
-            Global.scorer = scorer
 
             channelManagerConstructor.chain_sync_completed(
                 ChannelManagerEventHandler,
-                scorer
+                true
             )
 
             // If you want to communicate from your computer to your emulator,
@@ -144,10 +137,12 @@ fun start(
                 userConfig,
                 latestBlockHash.toByteArray(),
                 latestBlockHeight,
-                Global.keysManager?.as_KeysInterface(),
+                Global.keysManager,
                 feeEstimator,
                 Global.chainMonitor,
                 Global.router,
+                ProbabilisticScoringParameters.with_default(),
+                null,
                 txBroadcaster,
                 logger
             )
@@ -157,11 +152,9 @@ fun start(
             Global.peerManager = channelManagerConstructor.peer_manager
             Global.nioPeerHandler = channelManagerConstructor.nio_peer_handler
             Global.router = channelManagerConstructor.net_graph
-            Global.scorer = scorer
-            Global.invoicePayer = channelManagerConstructor.payer
             channelManagerConstructor.chain_sync_completed(
                 ChannelManagerEventHandler,
-                scorer
+                true
             )
 
             channelManagerConstructor.nio_peer_handler.bind_listener(InetSocketAddress("127.0.0.1", 9777))
@@ -200,6 +193,75 @@ object LDKLogger : LoggerInterface {
     }
 }
 
+object LDKSignerProvider : SignerProvider.SignerProviderInterface {
+    override fun get_destination_script(): ByteArray {
+        val address = Address(OnchainWallet.getNewAddress())
+        return convertToByteArray(address.scriptPubkey())
+    }
+
+    override fun get_shutdown_scriptpubkey(): ShutdownScript {
+        val address = Address(OnchainWallet.getNewAddress())
+//        val payload: Payload = address.payload()
+//
+//
+//        when (payload) {
+//            is Payload.WitnessProgram -> {
+//                val result = ShutdownScript.new_witness_program(
+//                    WitnessVersion(payload.version.name.toByte()),
+//                    payload.program.toUByteArray().toByteArray()
+//                )
+//            }
+//            else -> {
+//                return this._shutdown_scriptpubkey
+//            }
+//        }
+        return this._shutdown_scriptpubkey
+    }
+
+    override fun generate_channel_keys_id(inbound: Boolean, channelValueSatoshis: Long, userChannelId: UInt128?): ByteArray {
+        return this.generate_channel_keys_id(inbound, channelValueSatoshis, userChannelId)
+    }
+
+    override fun derive_channel_signer(channelValueSatoshis: Long, channelKeysId: ByteArray?): WriteableEcdsaChannelSigner {
+        return this.derive_channel_signer(channelValueSatoshis, channelKeysId)
+    }
+
+    override fun read_chan_signer(reader: ByteArray?): Result_WriteableEcdsaChannelSignerDecodeErrorZ {
+        return this.read_chan_signer(reader)
+    }
+}
+
+// A trait that can handle cryptographic operations at the scope level of a node.
+object LDKNodeSigner : NodeSigner.NodeSignerInterface {
+    override fun get_inbound_payment_key_material(): ByteArray {
+        return this._inbound_payment_key_material
+    }
+
+    override fun get_node_id(recipient: Recipient?): Result_PublicKeyNoneZ {
+        return this.get_node_id(recipient)
+    }
+
+    override fun ecdh(
+        recipient: Recipient?,
+        otherKey: ByteArray?,
+        tweak: Option_ScalarZ?
+    ): Result_SharedSecretNoneZ {
+        return this.ecdh(recipient, otherKey, tweak)
+    }
+
+    override fun sign_invoice(
+        hrpBytes: ByteArray?,
+        invoiceData: Array<out UInt5>?,
+        recipient: Recipient?
+    ): Result_RecoverableSignatureNoneZ {
+        return this.sign_invoice(hrpBytes, invoiceData, recipient)
+    }
+
+    override fun sign_gossip_message(msg: UnsignedGossipMessage?): Result_SignatureNoneZ {
+        return this.sign_gossip_message(msg)
+    }
+}
+
 // To create a transaction broadcaster we need provide an object that implements the BroadcasterInterface
 // which has 1 function broadcast_transaction(tx: ByteArray?)
 object LDKBroadcaster : BroadcasterInterface.BroadcasterInterfaceInterface {
@@ -233,7 +295,7 @@ fun initializeNetworkGraph(genesisBlockHash: ByteArray, logger: Logger) {
 
     if (Global.router == null) {
         Log.i(LDKTAG, "Failed to load cached network graph from disk. Will sync from scratch.")
-        Global.router = NetworkGraph.of(genesisBlockHash.reversedArray(), logger)
+        Global.router = NetworkGraph.of(Network.LDKNetwork_Regtest, logger)
     }
 }
 

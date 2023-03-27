@@ -88,7 +88,7 @@ dependencies {
     def nav_version = "2.4.1"
     implementation "androidx.navigation:navigation-compose:$nav_version"
 
-    implementation 'org.bitcoindevkit:bdk-android:0.27.1'
+    implementation 'org.bitcoindevkit:bdk-android:0.28.0-SNAPSHOT'
 
     implementation fileTree(include: ['*.aar'], dir: 'libs')
 }

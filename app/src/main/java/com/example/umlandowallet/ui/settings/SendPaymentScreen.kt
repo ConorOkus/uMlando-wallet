@@ -16,11 +16,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.umlandowallet.Global
+import com.example.umlandowallet.Global.channelManagerConstructor
 import com.example.umlandowallet.utils.LDKTAG
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.ldk.structs.*
+import org.ldk.structs.Result_RouteLightningErrorZ.Result_RouteLightningErrorZ_OK
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,7 +78,6 @@ fun SendPaymentScreen() {
                 // If it's a zero invoice and we don't have an amount then don't proceed
                 if (isZeroValueInvoice && amountSats == 0L) {
                     Log.i(LDKTAG, "Zero-value invoice must specify an amount")
-                    // TO DO
                 }
 
                 // Amount was set but not allowed to set own amount
@@ -87,22 +85,21 @@ fun SendPaymentScreen() {
                     Log.i(LDKTAG, "Amount was set but not allowed to set own amount")
                 }
 
-                if (Global.channelManagerConstructor == null) {
+                if (channelManagerConstructor!!.channel_manager == null) {
                     Log.i(LDKTAG, "NO invoice payer")
                 }
 
-                val res = Global.channelManagerConstructor!!.payer!!.pay_invoice(invoice)
+                val res = UtilMethods.pay_invoice(
+                    invoice,
+                    Retry.attempts(6),
+                    channelManagerConstructor!!.channel_manager
+                )
 
                 val error = res as? Result_PaymentIdPaymentErrorZ.Result_PaymentIdPaymentErrorZ_Err
                 val invoiceError = error?.err as? PaymentError.Invoice
 
                 if (invoiceError != null) {
                     Log.i(LDKTAG, Error(invoiceError.invoice).toString())
-                }
-
-                val routingError = error?.err as? PaymentError.Routing
-                if (routingError != null) {
-                    Log.i(LDKTAG, Error(routingError.routing._err).toString())
                 }
 
                 val sendingError = error?.err as? PaymentError.Sending

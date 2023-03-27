@@ -28,7 +28,7 @@ class AccessImpl: Access {
         this.syncBestBlockConnected(Global.channelManager!!, Global.chainMonitor!!)
 
         Global.channelManagerConstructor!!.chain_sync_completed(
-            ChannelManagerEventHandler, Global.scorer!!
+            ChannelManagerEventHandler, true
         )
     }
 

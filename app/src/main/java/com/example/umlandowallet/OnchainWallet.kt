@@ -88,7 +88,7 @@ object OnchainWallet {
     }
 
     private fun sign(psbt: PartiallySignedTransaction) {
-        onchainWallet.sign(psbt)
+        onchainWallet.sign(psbt, null)
     }
 
     fun broadcast(signedPsbt: PartiallySignedTransaction): String {

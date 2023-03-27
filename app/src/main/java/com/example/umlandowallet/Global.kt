@@ -35,7 +35,6 @@ object Global {
     var p2pGossipSync: P2PGossipSync? = null
     var txFilter: Filter? = null
     var scorer: MultiThreadedLockableScore? = null
-    var invoicePayer: InvoicePayer? = null
     val relevantTxs: ArrayList<WatchedTransaction> = arrayListOf()
     val relevantOutputs: ArrayList<WatchedOutput> = arrayListOf()
 }
