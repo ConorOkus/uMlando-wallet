@@ -15,12 +15,9 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.umlandowallet.*
 import com.example.umlandowallet.Global.channelManager
 import com.example.umlandowallet.Global.keysManager
-import com.example.umlandowallet.LDKLogger
-import com.example.umlandowallet.LDKNodeSigner
-import com.example.umlandowallet.LDKSignerProvider
-import org.bitcoindevkit.Address
 import org.ldk.enums.Currency
 import org.ldk.structs.*
 import org.ldk.structs.Result_InvoiceSignOrCreationErrorZ.Result_InvoiceSignOrCreationErrorZ_OK
@@ -29,12 +26,14 @@ import org.ldk.structs.Result_InvoiceSignOrCreationErrorZ.Result_InvoiceSignOrCr
 fun ReceivePaymentScreen() {
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
     val logger: Logger = Logger.new_impl(LDKLogger)
+
+    val nodeSigner = LDKKeysManager(keysManager!!).get_node_signer()
     
     val description =  "coffee"
     val amtMsat: Long = 200000000
     val invoice: Result_InvoiceSignOrCreationErrorZ = UtilMethods.create_invoice_from_channelmanager(
         channelManager,
-        NodeSigner.new_impl(LDKNodeSigner),
+        nodeSigner,
         logger,
         Currency.LDKCurrency_Regtest,
         Option_u64Z.some(amtMsat),

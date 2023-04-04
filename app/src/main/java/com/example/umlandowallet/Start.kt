@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.bitcoindevkit.Address
+import org.bitcoindevkit.Payload
 //import org.bitcoindevkit.Payload
 import org.bitcoindevkit.Transaction
 import org.ldk.batteries.ChannelManagerConstructor
@@ -62,9 +63,6 @@ fun start(
     // Monitor the chain for lighting transactions that are relevant to our
     // node, and broadcasting force close transactions if need be
     Global.chainMonitor = ChainMonitor.of(filter, txBroadcaster, logger, feeEstimator, persister)
-
-    // Create a new instance of the NodeSigner
-    val nodeSigner = NodeSigner.new_impl(LDKNodeSigner)
 
     // Providing keys for signing lightning transactions
     Global.keysManager = KeysManager.of(
@@ -193,7 +191,32 @@ object LDKLogger : LoggerInterface {
     }
 }
 
-object LDKSignerProvider : SignerProvider.SignerProviderInterface {
+// Create a class called LDKKeysManager that wraps the KeysManager class
+class LDKKeysManager(private val keysManager: KeysManager) {
+    fun spend_spendable_outputs(
+        descriptors: Array<SpendableOutputDescriptor>,
+        outputs: Array<TxOut>,
+        changeDestinationScript: ByteArray,
+        feerateSatPer1000Weight: Int
+    ): Result_TransactionNoneZ {
+        return keysManager.spend_spendable_outputs(
+            descriptors,
+            outputs,
+            changeDestinationScript,
+            feerateSatPer1000Weight
+        )
+    }
+
+    fun get_node_signer(): NodeSigner {
+        return NodeSigner.new_impl(LDKNodeSigner)
+    }
+
+    fun get_signer_provider(): SignerProvider {
+        return SignerProvider.new_impl(LDKSignerProvider)
+    }
+}
+
+object LDKSignerProvider: SignerProvider.SignerProviderInterface {
     override fun get_destination_script(): ByteArray {
         val address = Address(OnchainWallet.getNewAddress())
         return convertToByteArray(address.scriptPubkey())
@@ -201,65 +224,72 @@ object LDKSignerProvider : SignerProvider.SignerProviderInterface {
 
     override fun get_shutdown_scriptpubkey(): ShutdownScript {
         val address = Address(OnchainWallet.getNewAddress())
-//        val payload: Payload = address.payload()
-//
-//
-//        when (payload) {
-//            is Payload.WitnessProgram -> {
-//                val result = ShutdownScript.new_witness_program(
-//                    WitnessVersion(payload.version.name.toByte()),
-//                    payload.program.toUByteArray().toByteArray()
-//                )
-//            }
-//            else -> {
-//                return this._shutdown_scriptpubkey
-//            }
-//        }
-        return this._shutdown_scriptpubkey
+
+        return when (val payload: Payload = address.payload()) {
+            is Payload.WitnessProgram -> {
+                val result = ShutdownScript.new_witness_program(
+                    WitnessVersion(payload.version.name.toByte()),
+                    payload.program.toUByteArray().toByteArray()
+                )
+
+                (result as Result_ShutdownScriptInvalidShutdownScriptZ.Result_ShutdownScriptInvalidShutdownScriptZ_OK).res
+            }
+            else -> {
+                this._shutdown_scriptpubkey
+            }
+        }
     }
 
-    override fun generate_channel_keys_id(inbound: Boolean, channelValueSatoshis: Long, userChannelId: UInt128?): ByteArray {
+    override fun generate_channel_keys_id(
+        inbound: Boolean,
+        channelValueSatoshis: Long,
+        userChannelId: UInt128?
+    ): ByteArray {
         return this.generate_channel_keys_id(inbound, channelValueSatoshis, userChannelId)
     }
 
-    override fun derive_channel_signer(channelValueSatoshis: Long, channelKeysId: ByteArray?): WriteableEcdsaChannelSigner {
+    override fun derive_channel_signer(
+        channelValueSatoshis: Long,
+        channelKeysId: ByteArray?
+    ): WriteableEcdsaChannelSigner {
         return this.derive_channel_signer(channelValueSatoshis, channelKeysId)
     }
 
     override fun read_chan_signer(reader: ByteArray?): Result_WriteableEcdsaChannelSignerDecodeErrorZ {
         return this.read_chan_signer(reader)
     }
+
 }
 
-// A trait that can handle cryptographic operations at the scope level of a node.
-object LDKNodeSigner : NodeSigner.NodeSignerInterface {
+object LDKNodeSigner: NodeSigner.NodeSignerInterface {
     override fun get_inbound_payment_key_material(): ByteArray {
         return this._inbound_payment_key_material
     }
 
-    override fun get_node_id(recipient: Recipient?): Result_PublicKeyNoneZ {
-        return this.get_node_id(recipient)
+    override fun get_node_id(p0: Recipient?): Result_PublicKeyNoneZ {
+        return this.get_node_id(p0)
     }
 
     override fun ecdh(
-        recipient: Recipient?,
-        otherKey: ByteArray?,
-        tweak: Option_ScalarZ?
+        p0: Recipient?,
+        p1: ByteArray?,
+        p2: Option_ScalarZ?
     ): Result_SharedSecretNoneZ {
-        return this.ecdh(recipient, otherKey, tweak)
+        return this.ecdh(p0, p1, p2)
     }
 
     override fun sign_invoice(
-        hrpBytes: ByteArray?,
-        invoiceData: Array<out UInt5>?,
-        recipient: Recipient?
+        p0: ByteArray?,
+        p1: Array<out UInt5>?,
+        p2: Recipient?
     ): Result_RecoverableSignatureNoneZ {
-        return this.sign_invoice(hrpBytes, invoiceData, recipient)
+        return this.sign_invoice(p0, p1, p2)
     }
 
-    override fun sign_gossip_message(msg: UnsignedGossipMessage?): Result_SignatureNoneZ {
-        return this.sign_gossip_message(msg)
+    override fun sign_gossip_message(p0: UnsignedGossipMessage?): Result_SignatureNoneZ {
+        return this.sign_gossip_message(p0)
     }
+
 }
 
 // To create a transaction broadcaster we need provide an object that implements the BroadcasterInterface
