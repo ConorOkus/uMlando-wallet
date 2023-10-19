@@ -34,7 +34,7 @@ object OnchainWallet {
     }
 
     fun getNewAddress(): String {
-        return onchainWallet.getAddress(AddressIndex.New).address
+        return onchainWallet.getAddress(AddressIndex.New).address.asString()
     }
 
     fun getBalance(): String {
@@ -89,12 +89,6 @@ object OnchainWallet {
 
     private fun sign(psbt: PartiallySignedTransaction) {
         onchainWallet.sign(psbt, null)
-    }
-
-    fun broadcast(signedPsbt: PartiallySignedTransaction): String {
-        val blockchain = createBlockchain()
-        blockchain.broadcast(signedPsbt.extractTx())
-        return signedPsbt.txid()
     }
 
     fun broadcastRawTx(tx: Transaction) {

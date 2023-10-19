@@ -20,18 +20,18 @@ import com.example.umlandowallet.Global.channelManager
 import com.example.umlandowallet.Global.keysManager
 import org.ldk.enums.Currency
 import org.ldk.structs.*
-import org.ldk.structs.Result_InvoiceSignOrCreationErrorZ.Result_InvoiceSignOrCreationErrorZ_OK
+import org.ldk.structs.Result_Bolt11InvoiceSignOrCreationErrorZ
 
 @Composable
 fun ReceivePaymentScreen() {
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
     val logger: Logger = Logger.new_impl(LDKLogger)
 
-    val nodeSigner = LDKKeysManager(keysManager!!).get_node_signer()
-    
+    val nodeSigner = keysManager!!.as_NodeSigner()
+
     val description =  "coffee"
     val amtMsat: Long = 200000000
-    val invoice: Result_InvoiceSignOrCreationErrorZ = UtilMethods.create_invoice_from_channelmanager(
+    val invoice: Result_Bolt11InvoiceSignOrCreationErrorZ = UtilMethods.create_invoice_from_channelmanager(
         channelManager,
         nodeSigner,
         logger,
@@ -42,7 +42,7 @@ fun ReceivePaymentScreen() {
         Option_u16Z.some(144),
     )
 
-    val invoiceResult = (invoice as Result_InvoiceSignOrCreationErrorZ_OK).res
+    val invoiceResult = (invoice as Result_Bolt11InvoiceSignOrCreationErrorZ.Result_Bolt11InvoiceSignOrCreationErrorZ_OK).res
     val encodedInvoice = invoiceResult.to_str()
 
     Column(

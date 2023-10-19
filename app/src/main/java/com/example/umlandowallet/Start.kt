@@ -88,28 +88,30 @@ fun start(
     channelHandshakeLimits._max_minimum_depth = 1
     userConfig._channel_handshake_limits = channelHandshakeLimits
 
-    val params = ProbabilisticScoringParameters.with_default()
-    val defaultScorer = ProbabilisticScorer.of(params, Global.router, logger)
+    val probabilisticScorer = initialiseProbabilisticScorer(logger)
+    val scorer = MultiThreadedLockableScore.of(probabilisticScorer!!.as_Score())
+    val scoringParams = ProbabilisticScoringFeeParameters.with_default()
 
     try {
         if (serializedChannelManager != null) {
             // loading from disk (restarting)
             val channelManagerConstructor = ChannelManagerConstructor(
-                serializedChannelManager,
-                serializedChannelMonitors,
+                Network.LDKNetwork_Regtest,
                 userConfig,
-                Global.keysManager,
+                latestBlockHash.toByteArray(),
+                latestBlockHeight,
+                Global.keysManager!!.as_EntropySource(),
+                Global.keysManager!!.as_NodeSigner(),
+                Global.keysManager!!.as_SignerProvider(),
                 feeEstimator,
                 Global.chainMonitor,
-                Global.txFilter,
-                Global.router!!.write(),
-                ProbabilisticScoringParameters.with_default(),
-                defaultScorer.write(),
+                Global.router,
+                ProbabilisticScoringDecayParameters.with_default(),
+                ProbabilisticScoringFeeParameters.with_default(),
                 null,
                 txBroadcaster,
                 logger
             )
-
 
             Global.channelManagerConstructor = channelManagerConstructor
             Global.channelManager = channelManagerConstructor.channel_manager
@@ -135,11 +137,14 @@ fun start(
                 userConfig,
                 latestBlockHash.toByteArray(),
                 latestBlockHeight,
-                Global.keysManager,
+                Global.keysManager!!.as_EntropySource(),
+                Global.keysManager!!.as_NodeSigner(),
+                Global.keysManager!!.as_SignerProvider(),
                 feeEstimator,
                 Global.chainMonitor,
                 Global.router,
-                ProbabilisticScoringParameters.with_default(),
+                ProbabilisticScoringDecayParameters.with_default(),
+                ProbabilisticScoringFeeParameters.with_default(),
                 null,
                 txBroadcaster,
                 logger
@@ -191,121 +196,23 @@ object LDKLogger : LoggerInterface {
     }
 }
 
-// Create a class called LDKKeysManager that wraps the KeysManager class
-class LDKKeysManager(private val keysManager: KeysManager) {
-    fun spend_spendable_outputs(
-        descriptors: Array<SpendableOutputDescriptor>,
-        outputs: Array<TxOut>,
-        changeDestinationScript: ByteArray,
-        feerateSatPer1000Weight: Int
-    ): Result_TransactionNoneZ {
-        return keysManager.spend_spendable_outputs(
-            descriptors,
-            outputs,
-            changeDestinationScript,
-            feerateSatPer1000Weight
-        )
-    }
-
-    fun get_node_signer(): NodeSigner {
-        return NodeSigner.new_impl(LDKNodeSigner)
-    }
-
-    fun get_signer_provider(): SignerProvider {
-        return SignerProvider.new_impl(LDKSignerProvider)
-    }
-}
-
-object LDKSignerProvider: SignerProvider.SignerProviderInterface {
-    override fun get_destination_script(): ByteArray {
-        val address = Address(OnchainWallet.getNewAddress())
-        return convertToByteArray(address.scriptPubkey())
-    }
-
-    override fun get_shutdown_scriptpubkey(): ShutdownScript {
-        val address = Address(OnchainWallet.getNewAddress())
-
-        return when (val payload: Payload = address.payload()) {
-            is Payload.WitnessProgram -> {
-                val result = ShutdownScript.new_witness_program(
-                    WitnessVersion(payload.version.name.toByte()),
-                    payload.program.toUByteArray().toByteArray()
-                )
-
-                (result as Result_ShutdownScriptInvalidShutdownScriptZ.Result_ShutdownScriptInvalidShutdownScriptZ_OK).res
-            }
-            else -> {
-                this._shutdown_scriptpubkey
-            }
-        }
-    }
-
-    override fun generate_channel_keys_id(
-        inbound: Boolean,
-        channelValueSatoshis: Long,
-        userChannelId: UInt128?
-    ): ByteArray {
-        return this.generate_channel_keys_id(inbound, channelValueSatoshis, userChannelId)
-    }
-
-    override fun derive_channel_signer(
-        channelValueSatoshis: Long,
-        channelKeysId: ByteArray?
-    ): WriteableEcdsaChannelSigner {
-        return this.derive_channel_signer(channelValueSatoshis, channelKeysId)
-    }
-
-    override fun read_chan_signer(reader: ByteArray?): Result_WriteableEcdsaChannelSignerDecodeErrorZ {
-        return this.read_chan_signer(reader)
-    }
-
-}
-
-object LDKNodeSigner: NodeSigner.NodeSignerInterface {
-    override fun get_inbound_payment_key_material(): ByteArray {
-        return this._inbound_payment_key_material
-    }
-
-    override fun get_node_id(p0: Recipient?): Result_PublicKeyNoneZ {
-        return this.get_node_id(p0)
-    }
-
-    override fun ecdh(
-        p0: Recipient?,
-        p1: ByteArray?,
-        p2: Option_ScalarZ?
-    ): Result_SharedSecretNoneZ {
-        return this.ecdh(p0, p1, p2)
-    }
-
-    override fun sign_invoice(
-        p0: ByteArray?,
-        p1: Array<out UInt5>?,
-        p2: Recipient?
-    ): Result_RecoverableSignatureNoneZ {
-        return this.sign_invoice(p0, p1, p2)
-    }
-
-    override fun sign_gossip_message(p0: UnsignedGossipMessage?): Result_SignatureNoneZ {
-        return this.sign_gossip_message(p0)
-    }
-
-}
-
 // To create a transaction broadcaster we need provide an object that implements the BroadcasterInterface
 // which has 1 function broadcast_transaction(tx: ByteArray?)
 object LDKBroadcaster : BroadcasterInterface.BroadcasterInterfaceInterface {
-    override fun broadcast_transaction(tx: ByteArray?) {
-        tx?.let {
+    override fun broadcast_transactions(txs: Array<out ByteArray>??) {
+        txs?.let { transactions ->
             CoroutineScope(Dispatchers.IO).launch {
-                val uByteArray = UByteArray(tx.size) { tx[it].toUByte() }
-                val transaction = Transaction(uByteArray.toList())
+                transactions.forEach { txByteArray ->
+                    val uByteArray = txByteArray.toUByteArray()
+                    val transaction = Transaction(uByteArray.toList())
 
-                OnchainWallet.broadcastRawTx(transaction)
-                Log.i(LDKTAG, "The raw transaction broadcast is: ${tx.toHex()}")
+                    OnchainWallet.broadcastRawTx(transaction)
+                    Log.i(LDKTAG, "The raw transaction broadcast is: ${txByteArray.toHex()}")
+                }
             }
         } ?: throw(IllegalStateException("Broadcaster attempted to broadcast a null transaction"))
     }
+
 }
 
 fun initializeNetworkGraph(genesisBlockHash: ByteArray, logger: Logger) {
@@ -327,6 +234,32 @@ fun initializeNetworkGraph(genesisBlockHash: ByteArray, logger: Logger) {
         Log.i(LDKTAG, "Failed to load cached network graph from disk. Will sync from scratch.")
         Global.router = NetworkGraph.of(Network.LDKNetwork_Regtest, logger)
     }
+}
+
+fun initialiseProbabilisticScorer(logger: Logger): ProbabilisticScorer? {
+    // Read Scorer data from disk
+    val params = ProbabilisticScoringFeeParameters.with_default()
+
+    val scorerFile = File("${Global.homeDir}/scorer.bin")
+    if (scorerFile.exists()) {
+        val read = ProbabilisticScorer.read(scorerFile.readBytes(), ProbabilisticScoringDecayParameters.with_default(), Global.router, logger)
+        if (read.is_ok) {
+            Log.i(LDKTAG, "Loaded scorer from disk")
+            return (read as Result_ProbabilisticScorerDecodeErrorZ.Result_ProbabilisticScorerDecodeErrorZ_OK).res
+        } else {
+            Log.i(LDKTAG, "Failed to load cached scorer")
+        }
+    }
+
+    val defaultScorer = ProbabilisticScorer.of(ProbabilisticScoringDecayParameters.with_default(), Global.router, logger)
+    val scorerRes = ProbabilisticScorer.read(
+        defaultScorer.write(), ProbabilisticScoringDecayParameters.with_default(), Global.router,
+        logger
+    )
+    if (!scorerRes.is_ok) {
+        return null
+    }
+    return (scorerRes as Result_ProbabilisticScorerDecodeErrorZ.Result_ProbabilisticScorerDecodeErrorZ_OK).res
 }
 
 
@@ -354,7 +287,7 @@ object LDKPersister : Persist.PersistInterface {
             ChannelMonitorUpdateStatus.LDKChannelMonitorUpdateStatus_Completed
         } catch (e: Exception) {
             Log.i(LDKTAG, "Failed to write to file: ${e.message}")
-            ChannelMonitorUpdateStatus.LDKChannelMonitorUpdateStatus_PermanentFailure
+            ChannelMonitorUpdateStatus.LDKChannelMonitorUpdateStatus_UnrecoverableError
         }
     }
 
@@ -373,7 +306,7 @@ object LDKPersister : Persist.PersistInterface {
             ChannelMonitorUpdateStatus.LDKChannelMonitorUpdateStatus_Completed
         } catch (e: Exception) {
             Log.i(LDKTAG, "Failed to write to file: ${e.message}")
-            ChannelMonitorUpdateStatus.LDKChannelMonitorUpdateStatus_PermanentFailure
+            ChannelMonitorUpdateStatus.LDKChannelMonitorUpdateStatus_UnrecoverableError
 
         }
 
@@ -440,8 +373,8 @@ object LDKTxFilter : Filter.FilterInterface {
 
         val params = WritableMap()
         val blockHash = output._block_hash
-        if (blockHash is ByteArray) {
-            params.putString("block_hash", blockHash.toHex())
+        if (blockHash is Option_ThirtyTwoBytesZ) {
+            params.putString("block_hash", blockHash.toString())
         }
         params.putString("index", index)
         params.putString("script_pubkey", scriptPubkey)

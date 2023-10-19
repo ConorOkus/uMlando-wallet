@@ -74,7 +74,7 @@ fun handleEvent(event: Event) {
         }
         if (reason is ClosureReason.CounterpartyForceClosed) {
             params.putString("reason", "CounterpartyForceClosed")
-            params.putString("text", reason.peer_msg)
+            params.putString("text", reason.peer_msg.toString())
         }
         if (reason is ClosureReason.DisconnectedPeer) {
             params.putString("reason", "DisconnectedPeer")

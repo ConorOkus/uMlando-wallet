@@ -4,10 +4,7 @@ import com.example.umlandowallet.*
 import com.example.umlandowallet.data.*
 import com.example.umlandowallet.utils.toByteArray
 import com.example.umlandowallet.utils.toHex
-import org.ldk.structs.ChainMonitor
-import org.ldk.structs.ChannelManager
-import org.ldk.structs.TwoTuple_TxidBlockHashZ
-import org.ldk.structs.TwoTuple_usizeTransactionZ
+import org.ldk.structs.*
 
 class AccessImpl: Access {
     override suspend fun sync() {
@@ -52,7 +49,7 @@ class AccessImpl: Access {
 
 
     override suspend fun syncTransactionConfirmed(
-        relevantTxIds: Array<TwoTuple_TxidBlockHashZ>,
+        relevantTxIds: Array<TwoTuple_ThirtyTwoBytesCOption_ThirtyTwoBytesZZ>,
         channelManager: ChannelManager,
         chainMonitor: ChainMonitor
     ) {
@@ -106,7 +103,7 @@ class AccessImpl: Access {
     }
 
     override suspend fun syncTransactionsUnconfirmed(
-        relevantTxIds: Array<TwoTuple_TxidBlockHashZ>,
+        relevantTxIds: Array<TwoTuple_ThirtyTwoBytesCOption_ThirtyTwoBytesZZ>,
         channelManager: ChannelManager,
         chainMonitor: ChainMonitor
     ) {

@@ -15,12 +15,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.umlandowallet.Global
 import com.example.umlandowallet.Global.channelManagerConstructor
 import com.example.umlandowallet.utils.LDKTAG
 import org.ldk.structs.*
-import org.ldk.structs.Result_RouteLightningErrorZ.Result_RouteLightningErrorZ_OK
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,12 +52,12 @@ fun SendPaymentScreen() {
         )
         Button(
             onClick = {
-                val parsedInvoice = Invoice.from_str(recipientInvoice)
+                val parsedInvoice = Bolt11Invoice.from_str(recipientInvoice)
                 if (!parsedInvoice.is_ok) {
                     Log.i(LDKTAG, "Unable to parse invoice")
                 }
                 val invoice =
-                    (parsedInvoice as Result_InvoiceParseOrSemanticErrorZ.Result_InvoiceParseOrSemanticErrorZ_OK).res
+                    (parsedInvoice as Result_Bolt11InvoiceSignOrCreationErrorZ.Result_Bolt11InvoiceSignOrCreationErrorZ_OK).res
 
                 var amountSats: Long = 0
 
@@ -95,7 +92,7 @@ fun SendPaymentScreen() {
                     channelManagerConstructor!!.channel_manager
                 )
 
-                val error = res as? Result_PaymentIdPaymentErrorZ.Result_PaymentIdPaymentErrorZ_Err
+                val error = res as? Result_PaymentFailureReasonDecodeErrorZ.Result_PaymentFailureReasonDecodeErrorZ_Err
                 val invoiceError = error?.err as? PaymentError.Invoice
 
                 if (invoiceError != null) {
