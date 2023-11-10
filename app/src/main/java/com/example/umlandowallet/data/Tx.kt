@@ -23,3 +23,9 @@ data class ConfirmedTx(
     val block_header: String,
     val merkle_proof_pos: Int
 )
+
+data class OutputSpent(
+    val spent: Boolean,
+    val txid: String,
+    val vin: Int
+)

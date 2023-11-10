@@ -57,85 +57,15 @@ fun SendPaymentScreen() {
                     Log.i(LDKTAG, "Unable to parse invoice")
                 }
                 val invoice =
-                    (parsedInvoice as Result_Bolt11InvoiceSignOrCreationErrorZ.Result_Bolt11InvoiceSignOrCreationErrorZ_OK).res
+                    (parsedInvoice as Result_Bolt11InvoiceParseOrSemanticErrorZ.Result_Bolt11InvoiceParseOrSemanticErrorZ_OK).res
 
-                var amountSats: Long = 0
-
-                if (invoice.amount_milli_satoshis() is Option_u64Z.Some) {
-                    amountSats = (invoice.amount_milli_satoshis() as Option_u64Z.Some).some * 1000
-                }
-
-                if (amountSats == 0L) {
-                    Log.i(LDKTAG, "Handle a zero-value invoice")
-                    // <Handle a zero-value invoice>
-                }
-
-                val isZeroValueInvoice = invoice.amount_milli_satoshis() is Option_u64Z.None
-
-                // If it's a zero invoice and we don't have an amount then don't proceed
-                if (isZeroValueInvoice && amountSats == 0L) {
-                    Log.i(LDKTAG, "Zero-value invoice must specify an amount")
-                }
-
-                // Amount was set but not allowed to set own amount
-                if (amountSats > 0 && !isZeroValueInvoice) {
-                    Log.i(LDKTAG, "Amount was set but not allowed to set own amount")
-                }
-
-                if (channelManagerConstructor!!.channel_manager == null) {
-                    Log.i(LDKTAG, "NO invoice payer")
-                }
-
-                val res = UtilMethods.pay_invoice(
+                val invoicePaymentResult = UtilMethods.pay_invoice(
                     invoice,
                     Retry.attempts(6),
                     channelManagerConstructor!!.channel_manager
                 )
 
-                val error = res as? Result_PaymentFailureReasonDecodeErrorZ.Result_PaymentFailureReasonDecodeErrorZ_Err
-                val invoiceError = error?.err as? PaymentError.Invoice
-
-                if (invoiceError != null) {
-                    Log.i(LDKTAG, Error(invoiceError.invoice).toString())
-                }
-
-                val sendingError = error?.err as? PaymentError.Sending
-                if (sendingError != null) {
-                    val paymentAllFailedRetrySafe =
-                        sendingError.sending as? PaymentSendFailure.AllFailedResendSafe
-                    if (paymentAllFailedRetrySafe != null) {
-                        Log.i(
-                            LDKTAG,
-                            Error(paymentAllFailedRetrySafe.all_failed_resend_safe.map { it.toString() }
-                                .toString()).toString()
-                        )
-                    }
-
-                    val paymentParameterError =
-                        sendingError.sending as? PaymentSendFailure.ParameterError
-                    if (paymentParameterError != null) {
-                        Log.i(
-                            LDKTAG,
-                            Error(paymentParameterError.parameter_error.toString()).toString()
-                        )
-                    }
-
-                    val paymentPartialFailure =
-                        sendingError.sending as? PaymentSendFailure.PartialFailure
-                    if (paymentPartialFailure != null) {
-                        Log.i(LDKTAG, Error(paymentPartialFailure.toString()).toString())
-                    }
-
-                    val paymentPathParameterError =
-                        sendingError.sending as? PaymentSendFailure.PathParameterError
-                    if (paymentPathParameterError != null) {
-                        Log.i(LDKTAG, Error(paymentPartialFailure.toString()).toString())
-                    }
-
-                    Log.i(LDKTAG, Error("PaymentError.Sending").toString())
-                }
-
-                if (res.is_ok) {
+                if (invoicePaymentResult.is_ok) {
                     Log.d(LDKTAG, "Invoice payment success")
                 }
 

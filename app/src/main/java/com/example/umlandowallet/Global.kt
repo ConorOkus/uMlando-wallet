@@ -31,7 +31,7 @@ object Global {
     var nioPeerHandler: NioPeerHandler? = null
     var peerManager: PeerManager? = null
 
-    var router: NetworkGraph? = null
+    var networkGraph: NetworkGraph? = null
     var p2pGossipSync: P2PGossipSync? = null
     var txFilter: Filter? = null
     var scorer: MultiThreadedLockableScore? = null
