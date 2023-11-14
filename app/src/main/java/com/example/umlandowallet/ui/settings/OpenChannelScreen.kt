@@ -63,7 +63,7 @@ fun OpenChannelScreen() {
     }
 }
 
-fun createChannel(pubKey: String) {
+private fun createChannel(pubKey: String) {
     temporaryChannelId = null
 
     val amount: Long = 1000000

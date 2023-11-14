@@ -8,7 +8,7 @@ import java.io.File
 
 // The onchain wallet is currently always in regtest mode
 object OnchainWallet {
-    private lateinit var onchainWallet: Wallet
+    lateinit var onchainWallet: Wallet
     private val blockchain: Blockchain = createBlockchain()
 
     init {

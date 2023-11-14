@@ -101,6 +101,13 @@ fun handleEvent(event: Event) {
         Log.i(LDKTAG, "Payment Failed")
     }
 
+    if(event is Event.SpendableOutputs) {
+        Log.i(LDKTAG, "Event.SpendableOutputs")
+        var outputs = event.outputs
+
+
+    }
+
     if(event is Event.PaymentClaimable) {
         Log.i(LDKTAG, "Event.PaymentClaimable")
         if (event.payment_hash != null) {

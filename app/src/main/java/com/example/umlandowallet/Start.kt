@@ -58,12 +58,7 @@ fun start(
     Global.chainMonitor = ChainMonitor.of(filter, txBroadcaster, logger, feeEstimator, persister)
 
     // Providing keys for signing lightning transactions
-    Global.keysManager = KeysManager.of(
-        entropy,
-        System.currentTimeMillis() / 1000,
-        (System.currentTimeMillis() * 1000).toInt()
-    )
-
+    Global.keysManager = LDKKeysManager(entropy, System.currentTimeMillis() / 1000, (System.currentTimeMillis() * 1000).toInt(), OnchainWallet.onchainWallet)
 
     val channelHandShakeConfig = ChannelHandshakeConfig.with_default()
     channelHandShakeConfig._minimum_depth = 1
@@ -105,9 +100,9 @@ fun start(
                 serializedChannelManager,
                 serializedChannelMonitors,
                 userConfig,
-                Global.keysManager!!.as_EntropySource(),
-                Global.keysManager!!.as_NodeSigner(),
-                Global.keysManager!!.as_SignerProvider(),
+                Global.keysManager!!.inner.as_EntropySource(),
+                Global.keysManager!!.inner.as_NodeSigner(),
+                Global.keysManager!!.inner.as_SignerProvider(),
                 feeEstimator,
                 Global.chainMonitor,
                 txFilter,
@@ -144,9 +139,9 @@ fun start(
                 userConfig,
                 latestBlockHash.toByteArray(),
                 latestBlockHeight,
-                Global.keysManager!!.as_EntropySource(),
-                Global.keysManager!!.as_NodeSigner(),
-                Global.keysManager!!.as_SignerProvider(),
+                Global.keysManager!!.inner.as_EntropySource(),
+                Global.keysManager!!.inner.as_NodeSigner(),
+                Global.keysManager!!.inner.as_SignerProvider(),
                 feeEstimator,
                 Global.chainMonitor,
                 networkGraph,

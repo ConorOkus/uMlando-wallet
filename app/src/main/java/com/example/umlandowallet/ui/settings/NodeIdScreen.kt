@@ -30,7 +30,7 @@ fun NodeIdScreen() {
         val nodeIdByteArray = Global.channelManager?._our_node_id
         println(nodeIdByteArray!!.toHex())
         Text(
-            text = nodeIdByteArray!!.toHex(),
+            text = nodeIdByteArray.toHex(),
             modifier = Modifier.padding(start = 24.dp, end = 24.dp)
         )
     }

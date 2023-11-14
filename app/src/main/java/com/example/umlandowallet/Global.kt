@@ -23,7 +23,7 @@ object Global {
     var refundAddressScript = ""
 
     var channelManager: ChannelManager? = null
-    var keysManager: KeysManager? = null
+    var keysManager: LDKKeysManager? = null
     var chainMonitor: ChainMonitor? = null
     var temporaryChannelId: ByteArray? = null
     var counterpartyNodeId: ByteArray? = null

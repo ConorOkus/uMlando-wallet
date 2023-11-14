@@ -33,7 +33,7 @@ interface Service {
     companion object {
         fun create() : Service {
             return ServiceImpl(
-                client = HttpClient() {
+                client = HttpClient {
                     install(Logging) {
                         logger = Logger.DEFAULT
                         level = LogLevel.HEADERS

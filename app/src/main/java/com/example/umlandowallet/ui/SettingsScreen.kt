@@ -141,6 +141,19 @@ fun SettingsScreen(navController: NavController) {
             }
         )
 
+        // Close channel
+        SettingButton(
+            label = "Close channel",
+            onClick = {
+                navController.navigate(Screen.CloseChannelScreen.route) {
+                    navController.graph.startDestinationRoute?.let { route ->
+                        popUpTo(route)
+                    }
+                    launchSingleTop = true
+                }
+            }
+        )
+
         Text(
             text = "Onchain Wallet",
             fontSize = 18.sp,
