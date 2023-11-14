@@ -39,19 +39,18 @@ fun start(
 
     // Optional: Here we initialize the NetworkGraph so LDK does path finding and provides routes for us
     val f = File(Global.homeDir + "/" + "network-graph.bin")
-    var networkGraph = NetworkGraph.of(Network.LDKNetwork_Regtest, logger)
-    if (f.exists()) {
+    var networkGraph = if (f.exists()) {
         Log.i(LDKTAG, "Loading network graph from: ${f.absolutePath}")
         val readResult = NetworkGraph.read(f.readBytes(), logger)
         if (readResult.is_ok) {
-            networkGraph = (readResult as Result_NetworkGraphDecodeErrorZ.Result_NetworkGraphDecodeErrorZ_OK).res
+            (readResult as Result_NetworkGraphDecodeErrorZ.Result_NetworkGraphDecodeErrorZ_OK).res
         } else {
             Log.i(LDKTAG, "Failed to load cached network graph from disk. Will sync from scratch.")
-            networkGraph = NetworkGraph.of(Network.LDKNetwork_Regtest, logger)
+            NetworkGraph.of(Network.LDKNetwork_Regtest, logger)
         }
     } else {
         Log.i(LDKTAG, "Failed to load cached network graph from disk. Will sync from scratch.")
-        networkGraph = NetworkGraph.of(Network.LDKNetwork_Regtest, logger)
+        NetworkGraph.of(Network.LDKNetwork_Regtest, logger)
     }
 
     // Monitor the chain for lighting transactions that are relevant to our
@@ -65,43 +64,57 @@ fun start(
         (System.currentTimeMillis() * 1000).toInt()
     )
 
-    // This is going to be the fee policy for __incoming__ channels. they are set upfront globally:
-    val userConfig = UserConfig.with_default()
-    val newChannelConfig = ChannelConfig.with_default()
-    newChannelConfig._forwarding_fee_proportional_millionths = 10000
-    newChannelConfig._forwarding_fee_base_msat = 1000
-    userConfig._channel_config = newChannelConfig
-
 
     val channelHandShakeConfig = ChannelHandshakeConfig.with_default()
     channelHandShakeConfig._minimum_depth = 1
     channelHandShakeConfig._announced_channel = false
-    userConfig._channel_handshake_config = channelHandShakeConfig
 
     val channelHandshakeLimits = ChannelHandshakeLimits.with_default()
     channelHandshakeLimits._max_minimum_depth = 1
-    userConfig._channel_handshake_limits = channelHandshakeLimits
 
-    val probabilisticScorer = initialiseProbabilisticScorer(logger)
-    val scorer = MultiThreadedLockableScore.of(probabilisticScorer!!.as_Score())
-    val scoringParams = ProbabilisticScoringFeeParameters.with_default()
+    val userConfig = UserConfig.with_default()
+    userConfig._channel_handshake_config = channelHandShakeConfig
+    userConfig._channel_handshake_limits = channelHandshakeLimits
+    userConfig._accept_inbound_channels = true
+
+    val scorerFile = File("${Global.homeDir}/scorer.bin")
+    if(scorerFile.exists()) {
+        val scorerReaderResult = ProbabilisticScorer.read(scorerFile.readBytes(), ProbabilisticScoringDecayParameters.with_default(), networkGraph, logger)
+        if (scorerReaderResult.is_ok) {
+            val probabilisticScorer =
+                (scorerReaderResult as Result_ProbabilisticScorerDecodeErrorZ.Result_ProbabilisticScorerDecodeErrorZ_OK).res
+            Global.scorer = MultiThreadedLockableScore.of(probabilisticScorer.as_Score())
+            Log.i(LDKTAG, "LDK: Probabilistic Scorer loaded and running")
+        } else {
+            Log.i(LDKTAG, "LDK: Couldn't loading Probabilistic Scorer")
+            val decayParams = ProbabilisticScoringDecayParameters.with_default()
+            val probabilisticScorer = ProbabilisticScorer.of(decayParams, networkGraph, logger)
+            Global.scorer = MultiThreadedLockableScore.of(probabilisticScorer.as_Score())
+            Log.i(LDKTAG, "LDK: Creating new Probabilistic Scorer")
+        }
+    } else {
+        val decayParams = ProbabilisticScoringDecayParameters.with_default()
+        val probabilisticScorer = ProbabilisticScorer.of(decayParams, networkGraph, logger)
+        Global.scorer = MultiThreadedLockableScore.of(probabilisticScorer.as_Score())
+    }
 
     try {
-        if (serializedChannelManager != null) {
+        if (serializedChannelManager != null && serializedChannelManager.isNotEmpty()) {
             // loading from disk (restarting)
             val channelManagerConstructor = ChannelManagerConstructor(
-                Network.LDKNetwork_Regtest,
+                serializedChannelManager,
+                serializedChannelMonitors,
                 userConfig,
-                latestBlockHash.toByteArray(),
-                latestBlockHeight,
                 Global.keysManager!!.as_EntropySource(),
                 Global.keysManager!!.as_NodeSigner(),
                 Global.keysManager!!.as_SignerProvider(),
                 feeEstimator,
                 Global.chainMonitor,
-                networkGraph,
+                txFilter,
+                networkGraph.write(),
                 ProbabilisticScoringDecayParameters.with_default(),
                 ProbabilisticScoringFeeParameters.with_default(),
+                Global.scorer!!.write(),
                 null,
                 txBroadcaster,
                 logger
@@ -126,7 +139,7 @@ fun start(
             channelManagerConstructor.nio_peer_handler.bind_listener(InetSocketAddress("127.0.0.1", 9777))
         } else {
             // fresh start
-            val channelManagerConstructor = ChannelManagerConstructor(
+            var channelManagerConstructor = ChannelManagerConstructor(
                 Network.LDKNetwork_Regtest,
                 userConfig,
                 latestBlockHash.toByteArray(),
@@ -148,7 +161,7 @@ fun start(
             Global.channelManager = channelManagerConstructor.channel_manager
             Global.peerManager = channelManagerConstructor.peer_manager
             Global.nioPeerHandler = channelManagerConstructor.nio_peer_handler
-            networkGraph = channelManagerConstructor.net_graph
+            Global.networkGraph = channelManagerConstructor.net_graph
             channelManagerConstructor.chain_sync_completed(
                 LDKEventHandler,
                 true
@@ -161,30 +174,5 @@ fun start(
     }
 }
 
-fun initialiseProbabilisticScorer(logger: Logger): ProbabilisticScorer? {
-    // Read Scorer data from disk
-    val params = ProbabilisticScoringFeeParameters.with_default()
-
-    val scorerFile = File("${Global.homeDir}/scorer.bin")
-    if (scorerFile.exists()) {
-        val read = ProbabilisticScorer.read(scorerFile.readBytes(), ProbabilisticScoringDecayParameters.with_default(), Global.router, logger)
-        if (read.is_ok) {
-            Log.i(LDKTAG, "Loaded scorer from disk")
-            return (read as Result_ProbabilisticScorerDecodeErrorZ.Result_ProbabilisticScorerDecodeErrorZ_OK).res
-        } else {
-            Log.i(LDKTAG, "Failed to load cached scorer")
-        }
-    }
-
-    val defaultScorer = ProbabilisticScorer.of(ProbabilisticScoringDecayParameters.with_default(), Global.router, logger)
-    val scorerRes = ProbabilisticScorer.read(
-        defaultScorer.write(), ProbabilisticScoringDecayParameters.with_default(), Global.router,
-        logger
-    )
-    if (!scorerRes.is_ok) {
-        return null
-    }
-    return (scorerRes as Result_ProbabilisticScorerDecodeErrorZ.Result_ProbabilisticScorerDecodeErrorZ_OK).res
-}
 
 

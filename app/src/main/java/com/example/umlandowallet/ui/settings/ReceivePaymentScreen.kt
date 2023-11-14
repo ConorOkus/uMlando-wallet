@@ -27,13 +27,11 @@ fun ReceivePaymentScreen() {
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
     val logger: Logger = Logger.new_impl(LDKLogger)
 
-    val nodeSigner = keysManager!!.as_NodeSigner()
-
     val description =  "coffee"
-    val amtMsat: Long = 200000000
-    val invoice: Result_Bolt11InvoiceSignOrCreationErrorZ = UtilMethods.create_invoice_from_channelmanager(
+    val amtMsat: Long = 10000
+    val invoice = UtilMethods.create_invoice_from_channelmanager(
         channelManager,
-        nodeSigner,
+        keysManager!!.as_NodeSigner(),
         logger,
         Currency.LDKCurrency_Regtest,
         Option_u64Z.some(amtMsat),

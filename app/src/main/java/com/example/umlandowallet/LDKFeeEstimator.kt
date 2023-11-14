@@ -12,17 +12,17 @@ object LDKFeeEstimator : FeeEstimator.FeeEstimatorInterface {
         }
 
         if (confirmationTarget == ConfirmationTarget.LDKConfirmationTarget_ChannelCloseMinimum) {
-            return 1000
+            return 253
         }
 
         if (confirmationTarget == ConfirmationTarget.LDKConfirmationTarget_MaxAllowedNonAnchorChannelRemoteFee) {
-            return 7500
+            return 253
         }
 
         if (confirmationTarget == ConfirmationTarget.LDKConfirmationTarget_OnChainSweep) {
-            return 7500
+            return 253
         }
 
-        return 7500
+        return 253
     }
 }
