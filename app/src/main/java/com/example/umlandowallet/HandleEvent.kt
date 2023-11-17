@@ -5,6 +5,8 @@ import com.example.umlandowallet.Global.channelManager
 import com.example.umlandowallet.utils.LDKTAG
 import com.example.umlandowallet.utils.storeEvent
 import com.example.umlandowallet.utils.toHex
+import org.bitcoindevkit.Address
+import org.bitcoindevkit.AddressIndex
 import org.ldk.structs.*
 import org.ldk.util.UInt128
 import kotlin.random.Random
@@ -38,6 +40,8 @@ fun handleEvent(event: Event) {
     }
 
     if (event is Event.OpenChannelRequest) {
+        Log.i(LDKTAG, "Event.OpenChannelRequest")
+
         val params = WritableMap()
         val userChannelId = UInt128(Random.nextLong(0, 100))
 
@@ -52,11 +56,19 @@ fun handleEvent(event: Event) {
         storeEvent("${Global.homeDir}/events_open_channel_request", params)
         Global.eventsFundingGenerationReady = Global.eventsFundingGenerationReady.plus(params.toString())
 
-        channelManager!!.accept_inbound_channel(
+        var res = channelManager?.accept_inbound_channel(
             event.temporary_channel_id,
             event.counterparty_node_id,
             userChannelId
         )
+
+        if (res != null) {
+            if (res.is_ok) {
+                Log.i(LDKTAG, "Open Channel Request Accepted")
+            } else {
+                Log.i(LDKTAG, "Open Channel Request Rejected")
+            }
+        }
     }
 
     if (event is Event.ChannelClosed) {
@@ -93,6 +105,22 @@ fun handleEvent(event: Event) {
         Global.eventsChannelClosed = Global.eventsChannelClosed.plus(params.toString())
     }
 
+    if (event is Event.ChannelPending) {
+        Log.i(LDKTAG, "Event.ChannelPending")
+        val params = WritableMap()
+        params.putString("channel_id", event.channel_id.toHex())
+        params.putString("user_channel_id", event.user_channel_id.toString())
+        storeEvent("${Global.homeDir}/events_channel_pending", params)
+    }
+
+    if (event is Event.ChannelReady) {
+        Log.i(LDKTAG, "Event.ChannelReady")
+        val params = WritableMap()
+        params.putString("channel_id", event.channel_id.toHex())
+        params.putString("user_channel_id", event.user_channel_id.toString())
+        storeEvent("${Global.homeDir}/events_channel_ready", params)
+    }
+
     if(event is Event.PaymentSent) {
         Log.i(LDKTAG, "Payment Sent")
     }
@@ -101,9 +129,43 @@ fun handleEvent(event: Event) {
         Log.i(LDKTAG, "Payment Failed")
     }
 
+    if(event is Event.PaymentPathFailed) {
+        Log.i(LDKTAG, "Event.PaymentPathFailed${event.failure}")
+    }
+
+    if(event is Event.PendingHTLCsForwardable) {
+        Log.i(LDKTAG, "Event.PendingHTLCsForwardable")
+        channelManager?.process_pending_htlc_forwards()
+    }
+
     if(event is Event.SpendableOutputs) {
         Log.i(LDKTAG, "Event.SpendableOutputs")
         var outputs = event.outputs
+        try {
+            val address = OnchainWallet.getNewAddress()
+            val script = Address(address).scriptPubkey().toBytes().toUByteArray().toByteArray()
+            val txOut: Array<TxOut> = arrayOf()
+            val res = Global.keysManager?.inner?.spend_spendable_outputs(
+                outputs,
+                txOut,
+                script,
+                1000,
+                null
+            )
+
+            if (res != null) {
+                if (res.is_ok) {
+                    val tx = (res as Result_TransactionNoneZ.Result_TransactionNoneZ_OK).res
+                    val txs: Array<ByteArray> = arrayOf()
+                    txs.plus(tx)
+
+                    LDKBroadcaster.broadcast_transactions(txs)
+                }
+            }
+
+        } catch (e: Exception) {
+            Log.i(LDKTAG, "Error: ${e.message}")
+        }
 
 
     }

@@ -31,7 +31,7 @@ fun ReceivePaymentScreen() {
     val amtMsat: Long = 10000
     val invoice = UtilMethods.create_invoice_from_channelmanager(
         channelManager,
-        keysManager!!.as_NodeSigner(),
+        keysManager!!.inner.as_NodeSigner(),
         logger,
         Currency.LDKCurrency_Regtest,
         Option_u64Z.some(amtMsat),
