@@ -1,6 +1,7 @@
 package com.example.umlandowallet.data.remote
 
 import com.example.umlandowallet.data.MerkleProof
+import com.example.umlandowallet.data.OutputSpent
 import com.example.umlandowallet.data.Tx
 import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -25,12 +26,14 @@ interface Service {
 
     suspend fun getMerkleProof(txid: String) : MerkleProof
 
+    suspend fun getOutputSpent(txid: String, outputIndex: Int) : OutputSpent
+
     suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int)
 
     companion object {
         fun create() : Service {
             return ServiceImpl(
-                client = HttpClient() {
+                client = HttpClient {
                     install(Logging) {
                         logger = Logger.DEFAULT
                         level = LogLevel.HEADERS

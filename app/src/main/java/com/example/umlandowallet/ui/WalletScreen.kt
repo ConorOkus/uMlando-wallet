@@ -49,8 +49,6 @@ fun WalletScreen() {
                 CoroutineScope(Dispatchers.IO).launch {
                     accessImpl.sync()
                 }
-
-                Log.i(LDKTAG, "Wallet synced")
             },
             modifier = Modifier
                 .padding(start = 24.dp, end = 24.dp)

@@ -2,7 +2,7 @@ package com.example.umlandowallet.data
 
 import kotlinx.serialization.Serializable
 
-public class WatchedTransaction(val id: ByteArray, val scriptPubKey: ByteArray)
+class WatchedTransaction(val id: ByteArray, val scriptPubKey: ByteArray)
 
 @Serializable
 data class Tx(
@@ -22,4 +22,10 @@ data class ConfirmedTx(
     val block_height: Int,
     val block_header: String,
     val merkle_proof_pos: Int
+)
+
+data class OutputSpent(
+    val spent: Boolean,
+    val txid: String,
+    val vin: Int
 )

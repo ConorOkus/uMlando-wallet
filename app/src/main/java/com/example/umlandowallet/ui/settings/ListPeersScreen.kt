@@ -8,8 +8,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.umlandowallet.Global.peerManager
+import com.example.umlandowallet.Global
 import com.example.umlandowallet.utils.toHex
+import org.ldk.structs.TwoTuple_PublicKeyCOption_SocketAddressZZ
 
 @Composable
 fun ListPeersScreen() {
@@ -27,14 +28,22 @@ fun ListPeersScreen() {
                 .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
         )
 
-        val peers = peerManager!!._peer_node_ids
-        val peersList: MutableList<String> = mutableListOf()
+        val peerManager = Global.channelManagerConstructor!!.peer_manager
+        val peers = peerManager._peer_node_ids
+        if (peers.isEmpty()) {
+            Text(
+                text = "No peers connected",
+                modifier = Modifier.padding(start = 24.dp, end = 24.dp)
+            )
+        }
+
+        val peersList: MutableList<TwoTuple_PublicKeyCOption_SocketAddressZZ> = mutableListOf()
         peers.forEach {
-            peersList.add(it.toHex())
+            peersList.add(it)
         }
         peersList.forEach { peer ->
             Text(
-                text = peer,
+                text = peer._a.toHex(),
                 modifier = Modifier.padding(start = 24.dp, end = 24.dp)
             )
         }

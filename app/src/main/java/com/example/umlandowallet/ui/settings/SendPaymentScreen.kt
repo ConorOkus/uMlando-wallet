@@ -15,13 +15,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.umlandowallet.Global
+import com.example.umlandowallet.Global.channelManagerConstructor
 import com.example.umlandowallet.utils.LDKTAG
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.ldk.structs.*
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,94 +52,64 @@ fun SendPaymentScreen() {
         )
         Button(
             onClick = {
-                val parsedInvoice = Invoice.from_str(recipientInvoice)
-                if (!parsedInvoice.is_ok) {
-                    Log.i(LDKTAG, "Unable to parse invoice")
+                val invoiceResult = Bolt11Invoice.from_str(recipientInvoice)
+                if(invoiceResult is Result_Bolt11InvoiceParseOrSemanticErrorZ.Result_Bolt11InvoiceParseOrSemanticErrorZ_Err) {
+                    Log.i(LDKTAG, "Unable to parse invoice ${invoiceResult.err}")
                 }
                 val invoice =
-                    (parsedInvoice as Result_InvoiceParseOrSemanticErrorZ.Result_InvoiceParseOrSemanticErrorZ_OK).res
+                    (invoiceResult as Result_Bolt11InvoiceParseOrSemanticErrorZ.Result_Bolt11InvoiceParseOrSemanticErrorZ_OK).res
 
-                var amountSats: Long = 0
-
-                if (invoice.amount_milli_satoshis() is Option_u64Z.Some) {
-                    amountSats = (invoice.amount_milli_satoshis() as Option_u64Z.Some).some * 1000
+                if (invoiceResult.is_ok) {
+                    Log.i(LDKTAG, "Invoice parsed successfully")
+                } else {
+                    Log.i(LDKTAG, "Unable to parse invoice")
                 }
 
-                if (amountSats == 0L) {
-                    Log.i(LDKTAG, "Handle a zero-value invoice")
-                    // <Handle a zero-value invoice>
+                val invoicePaymentResult = UtilMethods.pay_invoice(
+                    invoice,
+                    Retry.attempts(6),
+                    channelManagerConstructor!!.channel_manager
+                )
+                if (invoicePaymentResult.is_ok) {
+                    Log.i(LDKTAG, "Payment successful")
                 }
 
-                val isZeroValueInvoice = invoice.amount_milli_satoshis() is Option_u64Z.None
-
-                // If it's a zero invoice and we don't have an amount then don't proceed
-                if (isZeroValueInvoice && amountSats == 0L) {
-                    Log.i(LDKTAG, "Zero-value invoice must specify an amount")
-                    // TO DO
-                }
-
-                // Amount was set but not allowed to set own amount
-                if (amountSats > 0 && !isZeroValueInvoice) {
-                    Log.i(LDKTAG, "Amount was set but not allowed to set own amount")
-                }
-
-                if (Global.channelManagerConstructor == null) {
-                    Log.i(LDKTAG, "NO invoice payer")
-                }
-
-                val res = Global.channelManagerConstructor!!.payer!!.pay_invoice(invoice)
-
-                val error = res as? Result_PaymentIdPaymentErrorZ.Result_PaymentIdPaymentErrorZ_Err
+                val error = invoicePaymentResult as? Result_ThirtyTwoBytesPaymentErrorZ.Result_ThirtyTwoBytesPaymentErrorZ_Err
                 val invoiceError = error?.err as? PaymentError.Invoice
-
                 if (invoiceError != null) {
-                    Log.i(LDKTAG, Error(invoiceError.invoice).toString())
-                }
-
-                val routingError = error?.err as? PaymentError.Routing
-                if (routingError != null) {
-                    Log.i(LDKTAG, Error(routingError.routing._err).toString())
+                    Log.i(LDKTAG, "Payment failed: $invoiceError")
                 }
 
                 val sendingError = error?.err as? PaymentError.Sending
                 if (sendingError != null) {
-                    val paymentAllFailedRetrySafe =
-                        sendingError.sending as? PaymentSendFailure.AllFailedResendSafe
-                    if (paymentAllFailedRetrySafe != null) {
-                        Log.i(
-                            LDKTAG,
-                            Error(paymentAllFailedRetrySafe.all_failed_resend_safe.map { it.toString() }
-                                .toString()).toString()
-                        )
+                    val paymentAllFailedResendSafe = sendingError.sending as? PaymentSendFailure.AllFailedResendSafe
+                    if (paymentAllFailedResendSafe != null) {
+                        Log.i(LDKTAG, "Payment failed: $paymentAllFailedResendSafe")
                     }
 
-                    val paymentParameterError =
-                        sendingError.sending as? PaymentSendFailure.ParameterError
+                    val paymentParameterError = sendingError.sending as? PaymentSendFailure.ParameterError
                     if (paymentParameterError != null) {
-                        Log.i(
-                            LDKTAG,
-                            Error(paymentParameterError.parameter_error.toString()).toString()
-                        )
+                        Log.i(LDKTAG, "Payment failed: $paymentParameterError")
                     }
 
-                    val paymentPartialFailure =
-                        sendingError.sending as? PaymentSendFailure.PartialFailure
+                    val paymentPartialFailure = sendingError.sending as? PaymentSendFailure.PartialFailure
                     if (paymentPartialFailure != null) {
-                        Log.i(LDKTAG, Error(paymentPartialFailure.toString()).toString())
+                        Log.i(LDKTAG, "Payment failed: $paymentPartialFailure")
                     }
 
-                    val paymentPathParameterError =
-                        sendingError.sending as? PaymentSendFailure.PathParameterError
+                    val paymentPathParameterError = sendingError.sending as? PaymentSendFailure.PathParameterError
                     if (paymentPathParameterError != null) {
-                        Log.i(LDKTAG, Error(paymentPartialFailure.toString()).toString())
+                        Log.i(LDKTAG, "Payment failed: $paymentPathParameterError")
                     }
 
-                    Log.i(LDKTAG, Error("PaymentError.Sending").toString())
+                    val paymentDuplicateError = sendingError.sending as? PaymentSendFailure.DuplicatePayment
+                    if (paymentDuplicateError != null) {
+                        Log.i(LDKTAG, "Payment failed: $paymentDuplicateError")
+                    }
+
+                    Log.i(LDKTAG, "Payment failed with some unknown error")
                 }
 
-                if (res.is_ok) {
-                    Log.d(LDKTAG, "Invoice payment success")
-                }
 
             },
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),

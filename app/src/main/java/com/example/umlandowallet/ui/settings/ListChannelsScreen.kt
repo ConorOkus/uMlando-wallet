@@ -104,11 +104,11 @@ fun ListItem(
 }
 
 fun getUsuableChannels(): Array<out ChannelDetails>? {
-    return Global.channelManager!!.list_usable_channels()
+    return Global.channelManager!!.list_channels()
 }
 
 fun getLocalBalance(): String {
-    val usableChannels = Global.channelManager!!.list_usable_channels()
+    val usableChannels = Global.channelManager!!.list_channels()
 
     val localBalance = usableChannels.sumOf { it._balance_msat }
 

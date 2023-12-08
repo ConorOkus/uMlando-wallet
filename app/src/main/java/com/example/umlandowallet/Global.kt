@@ -23,7 +23,7 @@ object Global {
     var refundAddressScript = ""
 
     var channelManager: ChannelManager? = null
-    var keysManager: KeysManager? = null
+    var keysManager: LDKKeysManager? = null
     var chainMonitor: ChainMonitor? = null
     var temporaryChannelId: ByteArray? = null
     var counterpartyNodeId: ByteArray? = null
@@ -31,11 +31,10 @@ object Global {
     var nioPeerHandler: NioPeerHandler? = null
     var peerManager: PeerManager? = null
 
-    var router: NetworkGraph? = null
+    var networkGraph: NetworkGraph? = null
     var p2pGossipSync: P2PGossipSync? = null
     var txFilter: Filter? = null
     var scorer: MultiThreadedLockableScore? = null
-    var invoicePayer: InvoicePayer? = null
     val relevantTxs: ArrayList<WatchedTransaction> = arrayListOf()
     val relevantOutputs: ArrayList<WatchedOutput> = arrayListOf()
 }

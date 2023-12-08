@@ -188,6 +188,23 @@ fun Navigation(
             }
         ) { ReceivePaymentScreen() }
 
+        // Close channel
+        composable(
+            route = Screen.CloseChannelScreen.route,
+            enterTransition = {
+                slideIntoContainer(AnimatedContentScope.SlideDirection.Up, animationSpec = tween(animationDuration))
+            },
+            popEnterTransition = {
+                slideIntoContainer(AnimatedContentScope.SlideDirection.Up, animationSpec = tween(animationDuration))
+            },
+            exitTransition = {
+                slideOutOfContainer(AnimatedContentScope.SlideDirection.Down, animationSpec = tween(animationDuration))
+            },
+            popExitTransition = {
+                slideOutOfContainer(AnimatedContentScope.SlideDirection.Down, animationSpec = tween(animationDuration))
+            }
+        ) { CloseChannelScreen() }
+
         // Recovery phrase
         composable(
             route = Screen.RecoveryPhraseScreen.route,

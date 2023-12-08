@@ -3,6 +3,7 @@ package com.example.umlandowallet.data.remote
 import android.util.Log
 import com.example.umlandowallet.Global
 import com.example.umlandowallet.data.MerkleProof
+import com.example.umlandowallet.data.OutputSpent
 import com.example.umlandowallet.data.Tx
 import com.example.umlandowallet.utils.toByteArray
 import com.example.umlandowallet.utils.toHex
@@ -48,6 +49,10 @@ class ServiceImpl(private val client: HttpClient) : Service {
 
     override suspend fun getMerkleProof(txid: String): MerkleProof {
         return client.get("http://10.0.2.2:3002/tx/${txid}/merkle-proof").body()
+    }
+
+    override suspend fun getOutputSpent(txid: String, outputIndex: Int): OutputSpent {
+        return client.get("http://10.0.2.2:3002/tx/${txid}/outspend/${outputIndex}").body()
     }
 
     override suspend fun connectPeer(pubkeyHex: String, hostname: String, port: Int) {

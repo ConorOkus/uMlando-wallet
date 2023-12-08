@@ -6,6 +6,7 @@ plugins {
 
 android {
     compileSdk 33
+    ndkVersion '25.2.9519653'
 
     defaultConfig {
         applicationId "com.example.umlandowallet"
@@ -88,7 +89,7 @@ dependencies {
     def nav_version = "2.4.1"
     implementation "androidx.navigation:navigation-compose:$nav_version"
 
-    implementation 'org.bitcoindevkit:bdk-android:0.26.0'
+    implementation 'org.bitcoindevkit:bdk-android:0.30.0'
 
     implementation fileTree(include: ['*.aar'], dir: 'libs')
 }

@@ -12,13 +12,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.umlandowallet.Global
 import com.example.umlandowallet.Global.channelManager
 import com.example.umlandowallet.Global.temporaryChannelId
 import com.example.umlandowallet.utils.toByteArray
 import com.example.umlandowallet.utils.LDKTAG
 import org.ldk.structs.ChannelHandshakeConfig
-import org.ldk.structs.Result__u832APIErrorZ
+import org.ldk.structs.Result_ThirtyTwoBytesAPIErrorZ
 import org.ldk.structs.UserConfig
 import org.ldk.util.UInt128
 
@@ -64,26 +63,25 @@ fun OpenChannelScreen() {
     }
 }
 
-fun createChannel(pubKey: String) {
+private fun createChannel(pubKey: String) {
     temporaryChannelId = null
 
-    val amount: Long = 10000000
-    val pushMsat: Long = 10000
+    val amount: Long = 100000
+    val pushMsat: Long = 0
     val userId = UInt128(42L)
 
     // public aka announced channel
     val userConfig = UserConfig.with_default()
 
     val channelHandshakeConfig = ChannelHandshakeConfig.with_default()
-    // set the following to true to open a public channel
+    // set the following to false to open a private channel
     channelHandshakeConfig._announced_channel = false
-    userConfig._channel_handshake_config = channelHandshakeConfig
-
+ 
     val createChannelResult = channelManager!!.create_channel(
         pubKey.toByteArray(), amount, pushMsat, userId, userConfig
     )
 
-    if (createChannelResult !is Result__u832APIErrorZ.Result__u832APIErrorZ_OK) {
+    if (createChannelResult !is Result_ThirtyTwoBytesAPIErrorZ) {
         Log.i(LDKTAG, "ERROR: failed to open channel with: $pubKey")
     }
 
