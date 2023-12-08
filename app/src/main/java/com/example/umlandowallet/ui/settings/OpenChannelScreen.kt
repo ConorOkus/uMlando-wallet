@@ -66,7 +66,7 @@ fun OpenChannelScreen() {
 private fun createChannel(pubKey: String) {
     temporaryChannelId = null
 
-    val amount: Long = 1000000
+    val amount: Long = 100000
     val pushMsat: Long = 0
     val userId = UInt128(42L)
 
@@ -74,7 +74,7 @@ private fun createChannel(pubKey: String) {
     val userConfig = UserConfig.with_default()
 
     val channelHandshakeConfig = ChannelHandshakeConfig.with_default()
-    // set the following to true to open a public channel
+    // set the following to false to open a private channel
     channelHandshakeConfig._announced_channel = false
  
     val createChannelResult = channelManager!!.create_channel(

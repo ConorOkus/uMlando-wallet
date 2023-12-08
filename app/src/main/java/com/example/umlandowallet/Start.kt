@@ -39,18 +39,14 @@ fun start(
 
     // Optional: Here we initialize the NetworkGraph so LDK does path finding and provides routes for us
     val f = File(Global.homeDir + "/" + "network-graph.bin")
-    var networkGraph = if (f.exists()) {
-        Log.i(LDKTAG, "Loading network graph from: ${f.absolutePath}")
-        val readResult = NetworkGraph.read(f.readBytes(), logger)
-        if (readResult.is_ok) {
-            (readResult as Result_NetworkGraphDecodeErrorZ.Result_NetworkGraphDecodeErrorZ_OK).res
-        } else {
-            Log.i(LDKTAG, "Failed to load cached network graph from disk. Will sync from scratch.")
-            NetworkGraph.of(Network.LDKNetwork_Regtest, logger)
+    if (f.exists()) {
+        Log.i(LDKTAG, "Successfully loaded cached network graph from disk.")
+        (NetworkGraph.read(f.readBytes(), logger) as? Result_NetworkGraphDecodeErrorZ.Result_NetworkGraphDecodeErrorZ_OK)?.let { res ->
+            Global.networkGraph = res.res
         }
     } else {
         Log.i(LDKTAG, "Failed to load cached network graph from disk. Will sync from scratch.")
-        NetworkGraph.of(Network.LDKNetwork_Regtest, logger)
+        Global.networkGraph = NetworkGraph.of(Network.LDKNetwork_Regtest, logger)
     }
 
     // Monitor the chain for lighting transactions that are relevant to our
@@ -74,22 +70,22 @@ fun start(
 
     val scorerFile = File("${Global.homeDir}/scorer.bin")
     if(scorerFile.exists()) {
-        val scorerReaderResult = ProbabilisticScorer.read(scorerFile.readBytes(), ProbabilisticScoringDecayParameters.with_default(), networkGraph, logger)
+        val scorerReaderResult = ProbabilisticScorer.read(scorerFile.readBytes(), ProbabilisticScoringDecayParameters.with_default(), Global.networkGraph, logger)
         if (scorerReaderResult.is_ok) {
             val probabilisticScorer =
                 (scorerReaderResult as Result_ProbabilisticScorerDecodeErrorZ.Result_ProbabilisticScorerDecodeErrorZ_OK).res
             Global.scorer = MultiThreadedLockableScore.of(probabilisticScorer.as_Score())
             Log.i(LDKTAG, "LDK: Probabilistic Scorer loaded and running")
         } else {
-            Log.i(LDKTAG, "LDK: Couldn't loading Probabilistic Scorer")
+            Log.i(LDKTAG, "LDK: Couldn't load Probabilistic Scorer")
             val decayParams = ProbabilisticScoringDecayParameters.with_default()
-            val probabilisticScorer = ProbabilisticScorer.of(decayParams, networkGraph, logger)
+            val probabilisticScorer = ProbabilisticScorer.of(decayParams, Global.networkGraph, logger)
             Global.scorer = MultiThreadedLockableScore.of(probabilisticScorer.as_Score())
             Log.i(LDKTAG, "LDK: Creating new Probabilistic Scorer")
         }
     } else {
         val decayParams = ProbabilisticScoringDecayParameters.with_default()
-        val probabilisticScorer = ProbabilisticScorer.of(decayParams, networkGraph, logger)
+        val probabilisticScorer = ProbabilisticScorer.of(decayParams, Global.networkGraph, logger)
         Global.scorer = MultiThreadedLockableScore.of(probabilisticScorer.as_Score())
     }
 
@@ -106,7 +102,7 @@ fun start(
                 feeEstimator,
                 Global.chainMonitor,
                 txFilter,
-                networkGraph.write(),
+                Global.networkGraph!!.write(),
                 ProbabilisticScoringDecayParameters.with_default(),
                 ProbabilisticScoringFeeParameters.with_default(),
                 Global.scorer!!.write(),
@@ -144,7 +140,7 @@ fun start(
                 Global.keysManager!!.inner.as_SignerProvider(),
                 feeEstimator,
                 Global.chainMonitor,
-                networkGraph,
+                Global.networkGraph,
                 ProbabilisticScoringDecayParameters.with_default(),
                 ProbabilisticScoringFeeParameters.with_default(),
                 null,

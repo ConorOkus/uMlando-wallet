@@ -14,28 +14,26 @@ import kotlin.random.Random
 fun handleEvent(event: Event) {
     if (event is Event.FundingGenerationReady) {
         Log.i(LDKTAG, "FundingGenerationReady")
-        val funding_spk = event.output_script
-        if (funding_spk.size == 34 && funding_spk[0].toInt() == 0 && funding_spk[1].toInt() == 32) {
-            val params = WritableMap()
+        if (event.output_script.size == 34 && event.output_script[0].toInt() == 0 && event.output_script[1].toInt() == 32) {
+            val rawTx =
+                OnchainWallet.buildFundingTx(event.channel_value_satoshis, event.output_script)
 
-            params.putString("counterparty_node_id", event.counterparty_node_id.toHex())
-            params.putString("channel_value_satoshis", event.channel_value_satoshis.toString())
-            params.putString("output_script", event.output_script.toHex())
-            Log.i(LDKTAG, "Output script is ${event.output_script.toHex()}")
-            params.putString("temporary_channel_id", event.temporary_channel_id.toHex())
-            params.putString("user_channel_id", event.user_channel_id.toString())
-            Global.temporaryChannelId = event.temporary_channel_id
-            Global.counterpartyNodeId = event.counterparty_node_id
-            storeEvent("${Global.homeDir}/events_funding_generation_ready", params)
-            Global.eventsFundingGenerationReady = Global.eventsFundingGenerationReady.plus(params.toString())
+            try {
+                val fundingTx = channelManager!!.funding_transaction_generated(
+                    event.temporary_channel_id,
+                    event.counterparty_node_id,
+                    rawTx.serialize().toUByteArray().toByteArray()
+                )
+                if (fundingTx is Result_NoneAPIErrorZ.Result_NoneAPIErrorZ_OK) {
+                    Log.i(LDKTAG, "Funding transaction generated")
+                }
+                if (fundingTx is Result_NoneAPIErrorZ.Result_NoneAPIErrorZ_Err) {
+                    Log.i(LDKTAG, "Error creating funding transaction: ${fundingTx.err}")
+                }
+            } catch (e: Exception) {
+                Log.i(LDKTAG, "Error: ${e.message}")
+            }
 
-            val rawTx = OnchainWallet.buildFundingTx(event.channel_value_satoshis, event.output_script)
-
-            channelManager!!.funding_transaction_generated(
-                event.temporary_channel_id,
-                event.counterparty_node_id,
-                rawTx.serialize().toUByteArray().toByteArray()
-            )
         }
     }
 
@@ -54,7 +52,8 @@ fun handleEvent(event: Event) {
         Global.temporaryChannelId = event.temporary_channel_id
         Global.counterpartyNodeId = event.counterparty_node_id
         storeEvent("${Global.homeDir}/events_open_channel_request", params)
-        Global.eventsFundingGenerationReady = Global.eventsFundingGenerationReady.plus(params.toString())
+        Global.eventsFundingGenerationReady =
+            Global.eventsFundingGenerationReady.plus(params.toString())
 
         var res = channelManager?.accept_inbound_channel(
             event.temporary_channel_id,
@@ -121,24 +120,24 @@ fun handleEvent(event: Event) {
         storeEvent("${Global.homeDir}/events_channel_ready", params)
     }
 
-    if(event is Event.PaymentSent) {
+    if (event is Event.PaymentSent) {
         Log.i(LDKTAG, "Payment Sent")
     }
 
-    if(event is Event.PaymentFailed) {
+    if (event is Event.PaymentFailed) {
         Log.i(LDKTAG, "Payment Failed")
     }
 
-    if(event is Event.PaymentPathFailed) {
+    if (event is Event.PaymentPathFailed) {
         Log.i(LDKTAG, "Event.PaymentPathFailed${event.failure}")
     }
 
-    if(event is Event.PendingHTLCsForwardable) {
+    if (event is Event.PendingHTLCsForwardable) {
         Log.i(LDKTAG, "Event.PendingHTLCsForwardable")
         channelManager?.process_pending_htlc_forwards()
     }
 
-    if(event is Event.SpendableOutputs) {
+    if (event is Event.SpendableOutputs) {
         Log.i(LDKTAG, "Event.SpendableOutputs")
         var outputs = event.outputs
         try {
@@ -170,14 +169,14 @@ fun handleEvent(event: Event) {
 
     }
 
-    if(event is Event.PaymentClaimable) {
+    if (event is Event.PaymentClaimable) {
         Log.i(LDKTAG, "Event.PaymentClaimable")
         if (event.payment_hash != null) {
             channelManager?.claim_funds(event.payment_hash)
         }
     }
 
-    if(event is Event.PaymentClaimed) {
+    if (event is Event.PaymentClaimed) {
         Log.i(LDKTAG, "Claimed Payment: ${event.payment_hash}")
     }
 }

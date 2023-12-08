@@ -1,7 +1,9 @@
 package com.example.umlandowallet.data.remote
 
+import android.util.Log
 import com.example.umlandowallet.*
 import com.example.umlandowallet.data.*
+import com.example.umlandowallet.utils.LDKTAG
 import com.example.umlandowallet.utils.toByteArray
 import com.example.umlandowallet.utils.toHex
 import org.ldk.structs.*
@@ -9,12 +11,22 @@ import org.ldk.structs.*
 class AccessImpl: Access {
     override suspend fun sync() {
         this.syncWallet(OnchainWallet)
+        Log.i(LDKTAG, "Attempting to sync on chain wallet")
+
 
         val channelManager = Global.channelManager!!
         val chainMonitor = Global.chainMonitor!!
 
+        Log.i(LDKTAG, "Attempting to sync lightning wallet")
+
+
         val relevantTxIdsFromChannelManager = channelManager.as_Confirm()._relevant_txids
         val relevantTxIdsFromChainMonitor = chainMonitor.as_Confirm()._relevant_txids
+        Log.i(LDKTAG, "Finding relevant Channel Manager TXs the size is ${relevantTxIdsFromChannelManager.size}")
+        Log.i(LDKTAG, "Finding relevant Chain Monitor TXs the size is ${relevantTxIdsFromChannelManager.size}")
+
+
+
 
         val relevantTxIds = relevantTxIdsFromChannelManager + relevantTxIdsFromChainMonitor
 
@@ -22,15 +34,19 @@ class AccessImpl: Access {
 
         val confirmedTxs = mutableListOf<ConfirmedTx>()
 
+        Log.i(LDKTAG, "Finding relevant TXs the size is ${relevantTxIds.size}")
         // Sync unconfirmed transactions
         for (txid in relevantTxIds) {
+            Log.i(LDKTAG, "Checking relevant TXs")
             val txId = txid._a.reversedArray().toHex()
             val tx: Tx = service.getTx(txId)
             if (tx.status.confirmed) {
+                Log.i(LDKTAG, "Adding Confirmed TX")
                 val txHex = service.getTxHex(txId)
                 val blockHeader = service.getHeader(tx.status.block_hash)
                 val merkleProof = service.getMerkleProof(txId)
                 if (tx.status.block_height === merkleProof.block_height) {
+                    Log.i(LDKTAG, "Adding Confirmed TX")
                     confirmedTxs.add(
                         ConfirmedTx(
                             tx = txHex.toByteArray(),
@@ -39,16 +55,18 @@ class AccessImpl: Access {
                             merkle_proof_pos = merkleProof.pos
                         )
                     )
-                } else {
-                    channelManager.as_Confirm().transaction_unconfirmed(txId.toByteArray())
-                    chainMonitor.as_Confirm().transaction_unconfirmed(txId.toByteArray())
                 }
+            } else {
+                Log.i(LDKTAG, "Marking unconfirmed TX")
+                channelManager.as_Confirm().transaction_unconfirmed(txId.toByteArray())
+                chainMonitor.as_Confirm().transaction_unconfirmed(txId.toByteArray())
             }
         }
 
         // Add confirmed Tx from filtered Transaction Ids
         val filteredTxs = LDKTxFilter.txids
         if (filteredTxs.isNotEmpty() && filteredTxs !== null) {
+            Log.i(LDKTAG, "Getting Filtered TXs")
             for (txid in filteredTxs) {
                 val txId = txid.reversedArray().toHex()
                 val tx: Tx = service.getTx(txId)
@@ -138,6 +156,8 @@ class AccessImpl: Access {
         chainMonitor.as_Confirm().best_block_updated(blockHeader.toByteArray(), blockHeight)
 
         Global.channelManagerConstructor!!.chain_sync_completed(LDKEventHandler, true)
+
+        Log.i(LDKTAG, "Wallet synced")
     }
 
     override suspend fun syncWallet(onchainWallet: OnchainWallet) {
