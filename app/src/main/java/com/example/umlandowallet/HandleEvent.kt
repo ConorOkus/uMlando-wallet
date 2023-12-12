@@ -11,6 +11,7 @@ import org.ldk.structs.*
 import org.ldk.util.UInt128
 import kotlin.random.Random
 
+@OptIn(ExperimentalUnsignedTypes::class)
 fun handleEvent(event: Event) {
     if (event is Event.FundingGenerationReady) {
         Log.i(LDKTAG, "FundingGenerationReady")
@@ -108,6 +109,7 @@ fun handleEvent(event: Event) {
         Log.i(LDKTAG, "Event.ChannelPending")
         val params = WritableMap()
         params.putString("channel_id", event.channel_id.toHex())
+        params.putString("tx_id", event.funding_txo._txid.toHex())
         params.putString("user_channel_id", event.user_channel_id.toString())
         storeEvent("${Global.homeDir}/events_channel_pending", params)
     }
@@ -165,7 +167,6 @@ fun handleEvent(event: Event) {
         } catch (e: Exception) {
             Log.i(LDKTAG, "Error: ${e.message}")
         }
-
 
     }
 

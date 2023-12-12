@@ -94,8 +94,9 @@ object OnchainWallet {
     fun broadcastRawTx(tx: Transaction) {
         val blockchain = createBlockchain()
         blockchain.broadcast(tx)
-        // Should expose txid
-        Log.i(LDKTAG, "The raw tx is ${tx.serialize().toUByteArray().toByteArray().toHex()}")
+
+        Log.i(LDKTAG, "Broadcasted transaction ID: ${tx.txid()}")
+        
     }
 
     private fun createBlockchain(): Blockchain {

@@ -12,6 +12,8 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import java.io.File
+import java.io.FileWriter
 import java.io.IOException
 import java.net.InetSocketAddress
 
@@ -63,6 +65,22 @@ class ServiceImpl(private val client: HttpClient) : Service {
                 InetSocketAddress(hostname, port), 5555
             )
             Log.i(LDKTAG, "LDK: successfully connected to peer $pubkeyHex")
+
+            val file = File("${Global.homeDir}/peers.txt")
+
+            if (!file.exists()) {
+                file.createNewFile()
+            }
+
+            // Open a FileWriter to write to the file (append mode)
+            val fileWriter = FileWriter(file, true)
+
+            // Write the IP address to the file
+            fileWriter.write("$pubkeyHex@$hostname:$port")
+            fileWriter.write(System.lineSeparator()) // Add a newline for readability
+
+            // Close the FileWriter
+            fileWriter.close()
         } catch (e: IOException) {
             Log.i(LDKTAG, "connectPeer exception: " + e.message)
         }

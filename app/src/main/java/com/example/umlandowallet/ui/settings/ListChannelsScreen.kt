@@ -47,17 +47,18 @@ fun ListChannelsScreen() {
         if (usableChannels != null) {
             if (usableChannels.isNotEmpty()) {
                 usableChannels.forEach { channel ->
-                    val status = channel._is_channel_ready
+                    val status = channel._is_usable
 
-                    val nodeId = channel._counterparty._node_id.toHex()
+                    val channelId = channel._channel_id.toHex()
                     val sendAmount = channel._outbound_capacity_msat / 1000
                     val receiveAmount = channel._inbound_capacity_msat / 1000
                     val progress: Double = receiveAmount.toDouble() / (sendAmount.toDouble() + receiveAmount.toDouble())
-                    Log.i(LDKTAG, "Progress update: $progress with $sendAmount and $receiveAmount")
+                    Log.i(LDKTAG, "Progress update: $progress with $sendAmount and $receiveAmount " +
+                            "for channel: $channelId")
 
                     ListItem(
                         status,
-                        nodeId,
+                        channelId,
                         progress.toFloat(),
                         sendAmount.toString(),
                         receiveAmount.toString()
@@ -73,23 +74,25 @@ fun ListChannelsScreen() {
 @Composable
 fun ListItem(
     status: Boolean,
-    nodeId: String,
+    channelId: String,
     progress: Float,
     sendAmount: String,
     receiveAmount: String
 ) {
-    var progress by remember { mutableStateOf(progress) }
+    val update by remember { mutableStateOf(progress) }
 
     if (status) {
         Text(text = "Active", style = TextStyle(color = Color.Green))
+    } else {
+        Text(text = "Inactive", style = TextStyle(color = Color.Red))
     }
-    Text(text = nodeId)
+    Text(text = channelId)
     LinearProgressIndicator(
         modifier = Modifier
             .fillMaxWidth()
             .height(25.dp)
             .padding(top = 16.dp),
-        progress = progress
+        progress = update
     )
     Row(
         modifier = Modifier
@@ -99,8 +102,6 @@ fun ListItem(
         Text(text = "$receiveAmount sats")
     }
     Spacer(modifier = Modifier.size(16.dp))
-
-
 }
 
 fun getUsuableChannels(): Array<out ChannelDetails>? {
