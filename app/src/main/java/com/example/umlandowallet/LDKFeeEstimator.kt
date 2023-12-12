@@ -12,11 +12,11 @@ object LDKFeeEstimator : FeeEstimator.FeeEstimatorInterface {
         }
 
         if (confirmationTarget == ConfirmationTarget.LDKConfirmationTarget_ChannelCloseMinimum) {
-            return 500
+            return 1000
         }
 
         if (confirmationTarget == ConfirmationTarget.LDKConfirmationTarget_OnChainSweep) {
-            return 500
+            return 1000
         }
 
         return 500

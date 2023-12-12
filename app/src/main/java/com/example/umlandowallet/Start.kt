@@ -5,7 +5,10 @@ import com.example.umlandowallet.utils.*
 import org.ldk.batteries.ChannelManagerConstructor
 import org.ldk.enums.Network
 import org.ldk.structs.*
+import java.io.BufferedReader
 import java.io.File
+import java.io.FileReader
+import java.io.IOException
 import java.net.InetSocketAddress
 
 fun start(
@@ -128,9 +131,10 @@ fun start(
             // If you want to do the reverse use 10.0.2.2 instead of localhost
 
             channelManagerConstructor.nio_peer_handler.bind_listener(InetSocketAddress("127.0.0.1", 9777))
+
         } else {
             // fresh start
-            var channelManagerConstructor = ChannelManagerConstructor(
+            val channelManagerConstructor = ChannelManagerConstructor(
                 Network.LDKNetwork_Regtest,
                 userConfig,
                 latestBlockHash.toByteArray(),

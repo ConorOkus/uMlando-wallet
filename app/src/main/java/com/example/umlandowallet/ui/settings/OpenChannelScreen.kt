@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.umlandowallet.Global
 import com.example.umlandowallet.Global.channelManager
 import com.example.umlandowallet.Global.temporaryChannelId
 import com.example.umlandowallet.utils.toByteArray
@@ -20,6 +21,9 @@ import org.ldk.structs.ChannelHandshakeConfig
 import org.ldk.structs.Result_ThirtyTwoBytesAPIErrorZ
 import org.ldk.structs.UserConfig
 import org.ldk.util.UInt128
+import java.io.File
+import java.io.FileWriter
+import java.io.IOException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,7 +74,6 @@ private fun createChannel(pubKey: String) {
     val pushMsat: Long = 0
     val userId = UInt128(42L)
 
-    // public aka announced channel
     val userConfig = UserConfig.with_default()
 
     val channelHandshakeConfig = ChannelHandshakeConfig.with_default()
