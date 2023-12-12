@@ -134,7 +134,7 @@ fun start(
 
         } else {
             // fresh start
-            val channelManagerConstructor = ChannelManagerConstructor(
+            var channelManagerConstructor = ChannelManagerConstructor(
                 Network.LDKNetwork_Regtest,
                 userConfig,
                 latestBlockHash.toByteArray(),

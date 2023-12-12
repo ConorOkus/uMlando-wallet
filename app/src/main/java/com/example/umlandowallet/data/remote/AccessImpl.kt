@@ -11,9 +11,12 @@ import org.ldk.structs.*
 class AccessImpl: Access {
     override suspend fun sync() {
         this.syncWallet(OnchainWallet)
+        Log.i(LDKTAG, "Attempting to sync on chain wallet")
 
         val channelManager = Global.channelManager!!
         val chainMonitor = Global.chainMonitor!!
+
+        Log.i(LDKTAG, "Attempting to sync lightning wallet")
 
         val service = Service.create()
 
@@ -23,12 +26,19 @@ class AccessImpl: Access {
         val relevantTxs = Global.relevantTxs
         for (transaction in relevantTxs) {
             val txId = transaction.id.reversedArray().toHex()
+        Log.i(LDKTAG, "Finding relevant TXs the size is ${relevantTxIds.size}")
+        // Sync unconfirmed transactions
+        for (txid in relevantTxIds) {
+            Log.i(LDKTAG, "Checking relevant TXs")
+            val txId = txid._a.reversedArray().toHex()
             val tx: Tx = service.getTx(txId)
             if (tx.status.confirmed) {
+                Log.i(LDKTAG, "Adding Confirmed TX")
                 val txHex = service.getTxHex(txId)
                 val blockHeader = service.getHeader(tx.status.block_hash)
                 val merkleProof = service.getMerkleProof(txId)
-                if (tx.status.block_height == merkleProof.block_height) {
+                if (tx.status.block_height === merkleProof.block_height) {
+                    Log.i(LDKTAG, "Adding Confirmed TX")
                     confirmedTxs.add(
                         ConfirmedTx(
                             tx = txHex.toByteArray(),
@@ -60,6 +70,62 @@ class AccessImpl: Access {
                         val blockHeader = service.getHeader(tx.status.block_hash)
                         val merkleProof = service.getMerkleProof(txId)
                         if (tx.status.block_height == merkleProof.block_height) {
+                            confirmedTxs.add(
+                                ConfirmedTx(
+                                    tx = txHex.toByteArray(),
+                                    block_height = tx.status.block_height,
+                                    block_header = blockHeader,
+                                    merkle_proof_pos = merkleProof.pos
+                                )
+                            )
+                        }
+                    }
+                }
+
+            }
+
+        }
+
+        // Add confirmed Tx from filtered Transaction Ids
+        val filteredTxs = LDKTxFilter.txids
+        if (filteredTxs.isNotEmpty() && filteredTxs !== null) {
+            Log.i(LDKTAG, "Getting Filtered TXs")
+            for (txid in filteredTxs) {
+                val txId = txid.reversedArray().toHex()
+                val tx: Tx = service.getTx(txId)
+                if (tx.status.confirmed) {
+                    val txHex = service.getTxHex(txId)
+                    val blockHeader = service.getHeader(tx.status.block_hash)
+                    val merkleProof = service.getMerkleProof(txId)
+                    if (tx.status.block_height === merkleProof.block_height) {
+                        confirmedTxs.add(
+                            ConfirmedTx(
+                                tx = txHex.toByteArray(),
+                                block_height = tx.status.block_height,
+                                block_header = blockHeader,
+                                merkle_proof_pos = merkleProof.pos
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        // Add confirmed Tx from filter Transaction Output
+        val filteredOutputs = LDKTxFilter.outputs
+        if (filteredOutputs.isNotEmpty() && filteredOutputs !== null) {
+            for (output in filteredOutputs) {
+                val outpoint = output._outpoint
+                val outputIndex = outpoint._index
+                val txId = outpoint._txid.reversedArray().toHex()
+                val outputSpent: OutputSpent = service.getOutputSpent(txId, outputIndex.toInt())
+                if (outputSpent.spent) {
+                    val tx: Tx = service.getTx(outputSpent.txid)
+                    if (tx.status.confirmed) {
+                        val txHex = service.getTxHex(txId)
+                        val blockHeader = service.getHeader(tx.status.block_hash)
+                        val merkleProof = service.getMerkleProof(txId)
+                        if (tx.status.block_height === merkleProof.block_height) {
                             confirmedTxs.add(
                                 ConfirmedTx(
                                     tx = txHex.toByteArray(),

@@ -12,7 +12,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.umlandowallet.Global
 import com.example.umlandowallet.Global.channelManager
 import com.example.umlandowallet.Global.temporaryChannelId
 import com.example.umlandowallet.utils.toByteArray

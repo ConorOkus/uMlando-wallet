@@ -96,6 +96,7 @@ object OnchainWallet {
         blockchain.broadcast(tx)
 
         Log.i(LDKTAG, "Broadcasted transaction ID: ${tx.txid()}")
+        
     }
 
     private fun createBlockchain(): Blockchain {
