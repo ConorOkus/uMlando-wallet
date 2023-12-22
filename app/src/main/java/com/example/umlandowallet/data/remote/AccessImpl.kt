@@ -23,14 +23,14 @@ class AccessImpl: Access {
         val confirmedTxs = mutableListOf<ConfirmedTx>()
 
         // Sync unconfirmed transactions
-        val relevantTxs = Global.relevantTxs
-        for (transaction in relevantTxs) {
-            val txId = transaction.id.reversedArray().toHex()
+        val relevantTxIds = Global.relevantTxs.map {
+            it.id.reversedArray().toHex()
+        }
+
         Log.i(LDKTAG, "Finding relevant TXs the size is ${relevantTxIds.size}")
         // Sync unconfirmed transactions
-        for (txid in relevantTxIds) {
+        for (txId in relevantTxIds) {
             Log.i(LDKTAG, "Checking relevant TXs")
-            val txId = txid._a.reversedArray().toHex()
             val tx: Tx = service.getTx(txId)
             if (tx.status.confirmed) {
                 Log.i(LDKTAG, "Adding Confirmed TX")
@@ -120,12 +120,12 @@ class AccessImpl: Access {
                 val txId = outpoint._txid.reversedArray().toHex()
                 val outputSpent: OutputSpent = service.getOutputSpent(txId, outputIndex.toInt())
                 if (outputSpent.spent) {
-                    val tx: Tx = service.getTx(outputSpent.txid)
+                    val tx: Tx = service.getTx(txId)
                     if (tx.status.confirmed) {
                         val txHex = service.getTxHex(txId)
                         val blockHeader = service.getHeader(tx.status.block_hash)
                         val merkleProof = service.getMerkleProof(txId)
-                        if (tx.status.block_height === merkleProof.block_height) {
+                        if (tx.status.block_height == merkleProof.block_height) {
                             confirmedTxs.add(
                                 ConfirmedTx(
                                     tx = txHex.toByteArray(),
@@ -186,5 +186,4 @@ class AccessImpl: Access {
     override suspend fun syncWallet(onchainWallet: OnchainWallet) {
         onchainWallet.sync()
     }
-
 }
