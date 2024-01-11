@@ -8,17 +8,21 @@ import org.ldk.structs.FeeEstimator
 object LDKFeeEstimator : FeeEstimator.FeeEstimatorInterface {
     override fun get_est_sat_per_1000_weight(confirmationTarget: ConfirmationTarget?): Int {
         if (confirmationTarget == ConfirmationTarget.LDKConfirmationTarget_MaxAllowedNonAnchorChannelRemoteFee) {
-            return 500
+            return 253
         }
 
         if (confirmationTarget == ConfirmationTarget.LDKConfirmationTarget_ChannelCloseMinimum) {
-            return 1000
+            return 253
         }
 
         if (confirmationTarget == ConfirmationTarget.LDKConfirmationTarget_OnChainSweep) {
-            return 1000
+            return 253
         }
 
-        return 500
+        if (confirmationTarget == ConfirmationTarget.LDKConfirmationTarget_NonAnchorChannelFee) {
+            return 253
+        }
+
+        return 253
     }
 }

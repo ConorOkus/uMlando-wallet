@@ -101,7 +101,7 @@ fun start(
                 userConfig,
                 Global.keysManager!!.inner.as_EntropySource(),
                 Global.keysManager!!.inner.as_NodeSigner(),
-                Global.keysManager!!.inner.as_SignerProvider(),
+                SignerProvider.new_impl(Global.keysManager!!.signerProvider),
                 feeEstimator,
                 Global.chainMonitor,
                 txFilter,
@@ -134,14 +134,14 @@ fun start(
 
         } else {
             // fresh start
-            var channelManagerConstructor = ChannelManagerConstructor(
+            val channelManagerConstructor = ChannelManagerConstructor(
                 Network.LDKNetwork_Regtest,
                 userConfig,
                 latestBlockHash.toByteArray(),
                 latestBlockHeight,
                 Global.keysManager!!.inner.as_EntropySource(),
                 Global.keysManager!!.inner.as_NodeSigner(),
-                Global.keysManager!!.inner.as_SignerProvider(),
+                SignerProvider.new_impl(Global.keysManager!!.signerProvider),
                 feeEstimator,
                 Global.chainMonitor,
                 Global.networkGraph,

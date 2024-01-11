@@ -56,7 +56,7 @@ fun handleEvent(event: Event) {
         Global.eventsFundingGenerationReady =
             Global.eventsFundingGenerationReady.plus(params.toString())
 
-        var res = channelManager?.accept_inbound_channel(
+        val res = channelManager?.accept_inbound_channel(
             event.temporary_channel_id,
             event.counterparty_node_id,
             userChannelId
@@ -141,7 +141,7 @@ fun handleEvent(event: Event) {
 
     if (event is Event.SpendableOutputs) {
         Log.i(LDKTAG, "Event.SpendableOutputs")
-        var outputs = event.outputs
+        val outputs = event.outputs
         try {
             val address = OnchainWallet.getNewAddress()
             val script = Address(address).scriptPubkey().toBytes().toUByteArray().toByteArray()
