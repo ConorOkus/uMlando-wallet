@@ -6,8 +6,8 @@ import com.example.umlandowallet.utils.LDKTAG
 import com.example.umlandowallet.utils.storeEvent
 import com.example.umlandowallet.utils.toHex
 import org.bitcoindevkit.Address
-import org.bitcoindevkit.AddressIndex
 import org.ldk.structs.*
+import org.ldk.structs.PaymentPurpose.InvoicePayment
 import org.ldk.util.UInt128
 import kotlin.random.Random
 
@@ -173,11 +173,14 @@ fun handleEvent(event: Event) {
     if (event is Event.PaymentClaimable) {
         Log.i(LDKTAG, "Event.PaymentClaimable")
         if (event.payment_hash != null) {
-            channelManager?.claim_funds(event.payment_hash)
+            val purpose = event.purpose as InvoicePayment
+            val paymentPreimage = (purpose.payment_preimage as Option_ThirtyTwoBytesZ.Some).some
+
+            channelManager?.claim_funds(paymentPreimage)
         }
     }
 
     if (event is Event.PaymentClaimed) {
-        Log.i(LDKTAG, "Claimed Payment: ${event.payment_hash}")
+        Log.i(LDKTAG, "Claimed Payment: ${event.payment_hash.toHex()}")
     }
 }

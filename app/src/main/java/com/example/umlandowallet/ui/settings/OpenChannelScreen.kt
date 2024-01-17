@@ -74,10 +74,9 @@ private fun createChannel(pubKey: String) {
     val userId = UInt128(42L)
 
     val userConfig = UserConfig.with_default()
+    userConfig._channel_handshake_config._announced_channel = false
+    userConfig._channel_handshake_config._our_to_self_delay = 6
 
-    val channelHandshakeConfig = ChannelHandshakeConfig.with_default()
-    // set the following to false to open a private channel
-    channelHandshakeConfig._announced_channel = false
  
     val createChannelResult = channelManager!!.create_channel(
         pubKey.toByteArray(), amount, pushMsat, userId, userConfig

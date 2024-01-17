@@ -28,7 +28,7 @@ fun ReceivePaymentScreen() {
     val logger: Logger = Logger.new_impl(LDKLogger)
 
     val description =  "coffee"
-    val amtMsat: Long = 10000
+    val amtMsat: Long = 3000000
     val invoice = UtilMethods.create_invoice_from_channelmanager(
         channelManager,
         keysManager!!.inner.as_NodeSigner(),

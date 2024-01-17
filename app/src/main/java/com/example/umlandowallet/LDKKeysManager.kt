@@ -7,6 +7,9 @@ import org.ldk.structs.*
 import org.ldk.structs.TxOut
 import org.ldk.util.UInt128
 import org.ldk.util.WitnessVersion
+import java.io.ByteArrayOutputStream
+import java.io.IOException
+import java.io.ObjectOutputStream
 
 
 class LDKKeysManager(seed: ByteArray, startTimeSecs: Long, startTimeNano: Int, wallet: Wallet) {
@@ -54,25 +57,28 @@ class LDKSignerProvider : SignerProvider.SignerProviderInterface {
     }
 
     // We return the destination and shutdown scripts derived by the BDK wallet.
+    @OptIn(ExperimentalUnsignedTypes::class)
     override fun get_destination_script(): Result_CVec_u8ZNoneZ {
         val address = ldkkeysManager!!.wallet.getAddress(AddressIndex.New)
-        val res = Result_CVec_u8ZNoneZ.ok(convertToByteArray(address.address.scriptPubkey()))
-        if (res.is_ok) {
-            return res
-        }
-        return Result_CVec_u8ZNoneZ.err()
+        return Result_CVec_u8ZNoneZ.ok(address.address.scriptPubkey().toBytes().toUByteArray().toByteArray())
     }
 
+    // Only applies to cooperative close transactions.
     override fun get_shutdown_scriptpubkey(): Result_ShutdownScriptNoneZ {
         val address = ldkkeysManager!!.wallet.getAddress(AddressIndex.New).address
 
         return when (val payload: Payload = address.payload()) {
             is Payload.WitnessProgram -> {
+                val ver = when (payload.version.name) {
+                    in "V0".."V16" -> payload.version.name.substring(1).toIntOrNull() ?: 0
+                    else -> 0 // Default to 0 if it doesn't match any "V0" to "V16"
+                }
+
                 val result = ShutdownScript.new_witness_program(
-                    WitnessVersion(payload.version.name.toByte()),
+                    WitnessVersion(ver.toByte()),
                     payload.program.toUByteArray().toByteArray()
                 )
-                (result as Result_ShutdownScriptNoneZ)
+                Result_ShutdownScriptNoneZ.ok((result as Result_ShutdownScriptInvalidShutdownScriptZ.Result_ShutdownScriptInvalidShutdownScriptZ_OK).res)
             }
             else -> {
                 Result_ShutdownScriptNoneZ.err()
@@ -80,3 +86,4 @@ class LDKSignerProvider : SignerProvider.SignerProviderInterface {
         }
     }
 }
+
