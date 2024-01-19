@@ -146,12 +146,12 @@ fun handleEvent(event: Event) {
             val address = OnchainWallet.getNewAddress()
             val script = Address(address).scriptPubkey().toBytes().toUByteArray().toByteArray()
             val txOut: Array<TxOut> = arrayOf()
-            val res = Global.keysManager?.inner?.spend_spendable_outputs(
+            val res = Global.keysManager?.spend_spendable_outputs(
                 outputs,
                 txOut,
                 script,
                 1000,
-                null
+                Option_u32Z.None.none()
             )
 
             if (res != null) {

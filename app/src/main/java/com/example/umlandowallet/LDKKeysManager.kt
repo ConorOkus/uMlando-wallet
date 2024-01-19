@@ -1,16 +1,11 @@
 package com.example.umlandowallet
 
-import com.example.umlandowallet.utils.convertToByteArray
 import org.bitcoindevkit.*
 import org.bitcoindevkit.Wallet
 import org.ldk.structs.*
 import org.ldk.structs.TxOut
 import org.ldk.util.UInt128
 import org.ldk.util.WitnessVersion
-import java.io.ByteArrayOutputStream
-import java.io.IOException
-import java.io.ObjectOutputStream
-
 
 class LDKKeysManager(seed: ByteArray, startTimeSecs: Long, startTimeNano: Int, wallet: Wallet) {
     var inner: KeysManager
@@ -24,6 +19,12 @@ class LDKKeysManager(seed: ByteArray, startTimeSecs: Long, startTimeNano: Int, w
         signerProvider.ldkkeysManager = this
     }
 
+    // We drop all occurences of `SpendableOutputDescriptor::StaticOutput` (since they will be
+    // spendable by the BDK wallet) and forward any other descriptors to
+    // `KeysManager::spend_spendable_outputs`.
+    //
+    // Note you should set `locktime` to the current block height to mitigate fee sniping.
+    // See https://bitcoinops.org/en/topics/fee-sniping/ for more information.
     fun spend_spendable_outputs(
         descriptors: Array<SpendableOutputDescriptor>,
         outputs: Array<TxOut>,
@@ -31,8 +32,10 @@ class LDKKeysManager(seed: ByteArray, startTimeSecs: Long, startTimeNano: Int, w
         feerateSatPer1000Weight: Int,
         locktime: Option_u32Z
     ): Result_TransactionNoneZ {
+        val onlyNonStatic: Array<SpendableOutputDescriptor> = descriptors.filter { it !is SpendableOutputDescriptor.StaticOutput }.toTypedArray()
+
         return inner.spend_spendable_outputs(
-            descriptors,
+            onlyNonStatic,
             outputs,
             changeDestinationScript,
             feerateSatPer1000Weight,
