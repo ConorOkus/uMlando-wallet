@@ -17,6 +17,7 @@ import com.example.umlandowallet.Global.temporaryChannelId
 import com.example.umlandowallet.utils.toByteArray
 import com.example.umlandowallet.utils.LDKTAG
 import org.ldk.structs.ChannelHandshakeConfig
+import org.ldk.structs.Option_ThirtyTwoBytesZ
 import org.ldk.structs.Result_ThirtyTwoBytesAPIErrorZ
 import org.ldk.structs.UserConfig
 import org.ldk.util.UInt128
@@ -79,7 +80,7 @@ private fun createChannel(pubKey: String) {
 
  
     val createChannelResult = channelManager!!.create_channel(
-        pubKey.toByteArray(), amount, pushMsat, userId, userConfig
+        pubKey.toByteArray(), amount, pushMsat, userId, Option_ThirtyTwoBytesZ.none(), userConfig
     )
 
     if (createChannelResult !is Result_ThirtyTwoBytesAPIErrorZ) {

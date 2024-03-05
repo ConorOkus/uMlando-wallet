@@ -32,7 +32,8 @@ class LDKKeysManager(seed: ByteArray, startTimeSecs: Long, startTimeNano: Int, w
         feerateSatPer1000Weight: Int,
         locktime: Option_u32Z
     ): Result_TransactionNoneZ {
-        val onlyNonStatic: Array<SpendableOutputDescriptor> = descriptors.filter { it !is SpendableOutputDescriptor.StaticOutput }.toTypedArray()
+        val onlyNonStatic: Array<SpendableOutputDescriptor> =
+            descriptors.filter { it !is SpendableOutputDescriptor.StaticOutput }.toTypedArray()
 
         return inner.spend_spendable_outputs(
             onlyNonStatic,
@@ -61,9 +62,11 @@ class LDKSignerProvider : SignerProvider.SignerProviderInterface {
 
     // We return the destination and shutdown scripts derived by the BDK wallet.
     @OptIn(ExperimentalUnsignedTypes::class)
-    override fun get_destination_script(): Result_CVec_u8ZNoneZ {
+    override fun get_destination_script(p0: ByteArray?): Result_CVec_u8ZNoneZ {
         val address = ldkkeysManager!!.wallet.getAddress(AddressIndex.New)
-        return Result_CVec_u8ZNoneZ.ok(address.address.scriptPubkey().toBytes().toUByteArray().toByteArray())
+        return Result_CVec_u8ZNoneZ.ok(
+            address.address.scriptPubkey().toBytes().toUByteArray().toByteArray()
+        )
     }
 
     // Only applies to cooperative close transactions.
@@ -78,11 +81,14 @@ class LDKSignerProvider : SignerProvider.SignerProviderInterface {
                 }
 
                 val result = ShutdownScript.new_witness_program(
-                    WitnessVersion(ver.toByte()),
-                    payload.program.toUByteArray().toByteArray()
+                    WitnessProgram(
+                        payload.program.toUByteArray().toByteArray(),
+                        org.ldk.util.WitnessVersion(ver.toByte())
+                    )
                 )
                 Result_ShutdownScriptNoneZ.ok((result as Result_ShutdownScriptInvalidShutdownScriptZ.Result_ShutdownScriptInvalidShutdownScriptZ_OK).res)
             }
+
             else -> {
                 Result_ShutdownScriptNoneZ.err()
             }
